@@ -1,0 +1,1780 @@
+# ITO NADAGDAG NA IMPORTS
+import random
+import string
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import smtplib
+import time
+import re
+import winsound
+import threading
+from firebase_admin import messaging
+# end
+
+ # ITO NA DAGDAG HANGGANG
+
+# Email configuration
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 587
+EMAIL_ADDRESS = "togtogdausin@gmail.com"
+EMAIL_PASSWORD = "wggz jbzw lrto vwgo"
+
+# Responder email addresses
+RESPONDER_EMAILS = {
+    'pnp': 'zycheryuu@gmail.com',  # Replace with actual PNP email
+    'bfp': 'togtogdausin@gmail.com',  # Replace with actual BFP email
+    'mdrrmo': 'hakunamatata0940@gmail.com'  # Replace with actual MDRRMO email
+}
+
+# In-memory storage for OTPs (use Redis or database in production)
+otp_storage = {}
+
+def generate_otp():
+    """Generate a 6-digit OTP"""
+    return ''.join(random.choices(string.digits, k=6))
+
+def play_alert_sound():
+    """Play system alert sound when incident is reported"""
+    try:
+        # Windows
+        if hasattr(winsound, 'MessageBeep'):
+            winsound.MessageBeep(winsound.MB_ICONEXCLAMATION)
+        
+        # Alternative: Use playsound library for cross-platform
+        # from playsound import playsound
+        # playsound('alert.wav', False)  # False = don't block
+        
+    except Exception as e:
+        print(f"Could not play sound: {e}")
+
+def format_incident_email_with_priority(incident_data):
+    """Format incident data into email content with enhanced formatting"""
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    priority = incident_data.get('priority', 'medium').upper()
+    
+    # Enhanced subject based on priority
+    priority_emoji = {
+        'CRITICAL': '🚨🔥',
+        'HIGH': '🚨',
+        'MEDIUM': '⚠️',
+        'LOW': 'ℹ️'
+    }
+    
+    emoji = priority_emoji.get(priority, '⚠️')
+    subject = f"{emoji} URGENT: {incident_data.get('emergencyType', 'Emergency')} - {priority} PRIORITY"
+    
+    # Enhanced HTML email body
+    body_html = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+            
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #dc2626, #ef4444); color: white; padding: 30px; text-align: center;">
+                <h1 style="margin: 0; font-size: 28px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
+                    🚨 EMERGENCY ALERT 🚨
+                </h1>
+                <p style="margin: 10px 0 0 0; font-size: 18px; opacity: 0.9;">
+                    Immediate Response Required
+                </p>
+            </div>
+            
+            <!-- Priority Banner -->
+            <div style="background-color: {'#dc2626' if priority == 'CRITICAL' else '#ea580c' if priority == 'HIGH' else '#d97706'}; color: white; padding: 15px; text-align: center;">
+                <h2 style="margin: 0; font-size: 24px;">
+                    {priority} PRIORITY - {incident_data.get('emergencyType', 'Emergency')}
+                </h2>
+            </div>
+            
+            <!-- Main Content -->
+            <div style="padding: 30px;">
+                
+                <!-- Incident Details -->
+                <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 20px; margin-bottom: 25px; border-radius: 0 8px 8px 0;">
+                    <h3 style="color: #dc2626; margin-top: 0;">📋 Incident Information</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 8px 0; font-weight: bold; color: #374151;">Type:</td>
+                            <td style="padding: 8px 0; color: #1f2937;">{incident_data.get('emergencyType', 'Unknown')}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; font-weight: bold; color: #374151;">Department:</td>
+                            <td style="padding: 8px 0; color: #1f2937;">{incident_data.get('department', 'Unknown')}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; font-weight: bold; color: #374151;">Reported:</td>
+                            <td style="padding: 8px 0; color: #1f2937;">{timestamp}</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <!-- Location Info -->
+                <div style="background-color: #f0f9ff; border-left: 4px solid #0ea5e9; padding: 20px; margin-bottom: 25px; border-radius: 0 8px 8px 0;">
+                    <h3 style="color: #0ea5e9; margin-top: 0;">📍 Location Details</h3>
+                    <p style="margin: 5px 0;"><strong>Address:</strong> {incident_data.get('location', {}).get('address', 'Unknown location')}</p>
+                    <p style="margin: 5px 0;"><strong>Coordinates:</strong> {incident_data.get('location', {}).get('coordinates', 'Not available')}</p>
+                    <p style="margin: 15px 0 5px 0;">
+                        <a href="https://www.google.com/maps/search/?api=1&query={incident_data.get('location', {}).get('coordinates', '').replace('° N, ', ',').replace('° E', '')}" 
+                           style="display: inline-block; background-color: #0ea5e9; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                            🗺️ Open in Google Maps
+                        </a>
+                    </p>
+                </div>
+                
+                <!-- Reporter Info -->
+                <div style="background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 20px; margin-bottom: 25px; border-radius: 0 8px 8px 0;">
+                    <h3 style="color: #22c55e; margin-top: 0;">👤 Reporter Information</h3>
+                    <p style="margin: 5px 0;"><strong>Name:</strong> {incident_data.get('userName', 'Unknown')}</p>
+                    <p style="margin: 5px 0;"><strong>Contact:</strong> 
+                        <a href="tel:{incident_data.get('contactNumber', '')}" style="color: #22c55e; text-decoration: none;">
+                            {incident_data.get('contactNumber', 'Not provided')}
+                        </a>
+                    </p>
+                    <p style="margin: 5px 0;"><strong>Email:</strong> 
+                        <a href="mailto:{incident_data.get('userEmail', '')}" style="color: #22c55e; text-decoration: none;">
+                            {incident_data.get('userEmail', 'Not provided')}
+                        </a>
+                    </p>
+                </div>
+                
+                <!-- Action Required -->
+                <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 20px; margin-bottom: 25px; border-radius: 0 8px 8px 0;">
+                    <h3 style="color: #f59e0b; margin-top: 0;">⚡ Action Required</h3>
+                    <p style="color: #92400e; font-size: 16px; line-height: 1.6;">
+                        This incident requires <strong>immediate attention</strong> from emergency responders. 
+                        Please dispatch the appropriate team to the location as soon as possible.
+                    </p>
+                </div>
+                
+                <!-- Footer -->
+                <div style="text-align: center; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
+                    <p style="margin: 5px 0;">SafeVictoria Emergency Response System</p>
+                    <p style="margin: 5px 0;">Victoria, Laguna</p>
+                    <p style="margin: 5px 0;">🕐 Time Sent: {timestamp}</p>
+                </div>
+                
+            </div>
+        </div>
+        
+        <!-- JavaScript for browser sound alert -->
+        <script>
+            // This will play a sound when email is opened in some email clients
+            function playEmailAlert() {{
+                try {{
+                    // Create and play audio element
+                    var audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+LvumEWNg==');
+                    audio.play();
+                }} catch(e) {{
+                    console.log('Could not play email alert sound');
+                }}
+            }}
+            
+            // Try to play sound when email loads
+            window.onload = playEmailAlert;
+        </script>
+        
+    </body>
+    </html>
+    """
+    
+    # Plain text version for email clients that don't support HTML
+    body_text = f"""
+🚨 EMERGENCY INCIDENT REPORT - {priority} PRIORITY 🚨
+========================================================
+
+INCIDENT TYPE: {incident_data.get('emergencyType', 'Unknown')}
+DEPARTMENT: {incident_data.get('department', 'Unknown')}
+PRIORITY LEVEL: {priority}
+
+LOCATION INFORMATION:
+- Address: {incident_data.get('location', {}).get('address', 'Unknown location')}
+- Coordinates: {incident_data.get('location', {}).get('coordinates', 'Not available')}
+
+REPORTER INFORMATION:
+- Name: {incident_data.get('userName', 'Unknown')}
+- Contact: {incident_data.get('contactNumber', 'Not provided')}
+- Email: {incident_data.get('userEmail', 'Not provided')}
+
+INCIDENT DETAILS:
+- Description: {incident_data.get('description', 'Emergency reported via mobile app')}
+- Reported At: {timestamp}
+
+⚡ RESPONSE REQUIRED:
+This incident requires immediate attention from emergency responders.
+
+SafeVictoria Emergency Response System
+Victoria, Laguna
+    """.strip()
+    
+    return subject, body_html, body_text
+
+def send_email(to_emails, subject, body_html, body_text):
+    """Send enhanced HTML email with sound notification"""
+    try:
+        # Play sound alert on server
+        threading.Thread(target=play_alert_sound, daemon=True).start()
+        
+        # Create message
+        msg = MIMEMultipart('alternative')
+        msg['From'] = EMAIL_ADDRESS
+        msg['To'] = ", ".join(to_emails)
+        msg['Subject'] = subject
+        msg['X-Priority'] = '1'  # High priority
+        msg['X-MSMail-Priority'] = 'High'
+        msg['Importance'] = 'high'
+        
+        # Create both plain text and HTML versions
+        part1 = MIMEText(body_text, 'plain')
+        part2 = MIMEText(body_html, 'html')
+        
+        msg.attach(part1)
+        msg.attach(part2)
+        
+        # Gmail SMTP configuration
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+        
+        # Send email
+        text = msg.as_string()
+        server.sendmail(EMAIL_ADDRESS, to_emails, text)
+        server.quit()
+        
+        print(f"📧 Enhanced email sent to: {to_emails}")
+        print(f"🔊 Alert sound played")
+        
+        return True
+    except Exception as e:
+        print(f"Error sending enhanced email: {e}")
+        return False
+
+
+def send_bulk_email(to_emails, subject, body):
+    """Send email to multiple recipients"""
+    try:
+        # Create message
+        msg = MIMEMultipart()
+        msg['From'] = EMAIL_ADDRESS
+        msg['To'] = ", ".join(to_emails)
+        msg['Subject'] = subject
+        
+        # Add body to email
+        msg.attach(MIMEText(body, 'plain'))
+        
+        # Gmail SMTP configuration
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()  # Enable security
+        server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+        
+        # Send email to all recipients
+        text = msg.as_string()
+        server.sendmail(EMAIL_ADDRESS, to_emails, text)
+        server.quit()
+        
+        return True
+    except Exception as e:
+        print(f"Error sending bulk email: {e}")
+        return False
+
+def verify_firebase_user_exists(email):
+    """Check if user exists in Firebase Authentication"""
+    try:
+        user = auth.get_user_by_email(email)
+        return True, user.uid
+    except auth.UserNotFoundError:
+        return False, None
+    except Exception as e:
+        print(f"Error verifying user: {e}")
+        return False, None
+
+def clean_expired_otps():
+    """Clean up expired OTPs"""
+    current_time = time.time()
+    expired_emails = []
+    
+    for email, data in otp_storage.items():
+        if current_time > data['expires_at']:
+            expired_emails.append(email)
+    
+    for email in expired_emails:
+        del otp_storage[email]
+
+def get_priority_level(emergency_type):
+    """Determine priority level based on emergency type"""
+    critical_incidents = [
+        'Heart Attack', 'Stroke', 'Severe Allergic Reaction', 'Mental Health Crisis',
+        'Building Fire', 'Wildfire/Grass Fire', 'Gas Leak', 'Chemical Spill',
+        'Assault', 'Domestic Violence', 'Robbery', 'Flood', 'Landslide', 
+        'Earthquake', 'Building Collapse', 'Typhoon/Storm'
+    ]
+    
+    high_incidents = [
+        'Severe Injury', 'Road Accident Injury', 'Difficulty Breathing', 'Poisoning',
+        'Vehicle Fire', 'Water Rescue', 'Drug-related Crime', 'Power Outage'
+    ]
+    
+    if emergency_type in critical_incidents:
+        return 'critical'
+    elif emergency_type in high_incidents:
+        return 'high'
+    else:
+        return 'medium'
+
+def get_relevant_responders(department, priority):
+    """Get relevant responders based on department and priority"""
+    responders = []
+    
+    # Always include the primary department
+    if department == 'Police Department':
+        responders.append('pnp')
+    elif department == 'Fire Department':
+        responders.append('bfp')
+    elif department == 'Medical Department':
+        # Medical emergencies might need coordination with other departments
+        responders.extend(['pnp', 'bfp', 'mdrrmo'])  # BFP often handles medical emergencies too
+    elif department == 'Disaster Management':
+        responders.append('mdrrmo')
+    
+    # For critical/high priority incidents, notify all responders
+    if priority in ['critical', 'high']:
+        responders = ['pnp', 'bfp', 'mdrrmo']  # All responders for critical incidents
+    
+    return list(set(responders))  # Remove duplicates
+
+def format_incident_email(incident_data):
+    """Format incident data into email content"""
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    subject = f"🚨 Incident Alert: {incident_data.get('emergencyType', 'Emergency')}"
+    
+    body = f"""
+EMERGENCY INCIDENT REPORT
+=======================
+
+Incident Type: {incident_data.get('emergencyType', 'Unknown')}
+Department: {incident_data.get('department', 'Unknown')}
+Priority Level: {incident_data.get('priority', 'medium').upper()}
+
+LOCATION INFORMATION:
+- Address: {incident_data.get('location', {}).get('address', 'Unknown location')}
+- Coordinates: {incident_data.get('location', {}).get('coordinates', 'Not available')}
+
+REPORTER INFORMATION:
+- Name: {incident_data.get('userName', 'Unknown')}
+- Contact: {incident_data.get('contactNumber', 'Not provided')}
+- Email: {incident_data.get('userEmail', 'Not provided')}
+
+INCIDENT DETAILS:
+- Description: {incident_data.get('description', 'Emergency reported via mobile app')}
+- Reported At: {timestamp}
+
+RESPONSE REQUIRED:
+This incident requires immediate attention from emergency responders.
+
+SafeVictoria Emergency Response System
+Victoria, Laguna
+    """.strip()
+    
+    return subject, body
+
+def verify_firebase_token(auth_header):
+    """Verify Firebase ID token and return decoded token"""
+    try:
+        # Remove 'Bearer ' prefix if present
+        if auth_header.startswith('Bearer '):
+            token = auth_header[7:]
+        else:
+            token = auth_header
+        
+        decoded_token = auth.verify_id_token(token)
+        return decoded_token
+    except Exception as e:
+        print(f"Token verification error: {e}")
+        return None
+
+def get_user_email_and_role(uid):
+    """Fetch user email from Firebase Auth and determine role from email domain"""
+    try:
+        # Get user record from Firebase Auth
+        user_record = auth.get_user(uid)
+        email = user_record.email
+        
+        print(f"🔍 Retrieved email from Firebase Auth: {email}")
+        
+        if not email:
+            print("❌ No email found in Firebase Auth record")
+            return None, 'user'
+        
+        # Determine role based on email domain
+        email_lower = email.lower()
+        role = 'user'  # default role
+        
+        if '@bfp.gov.ph' in email_lower:
+            role = 'bfp'
+        elif '@pnp.gov.ph' in email_lower:
+            role = 'pnp'
+        elif '@mdrrmo.gov.ph' in email_lower or '@mdrrmo.' in email_lower:
+            role = 'mdrrmo'
+        
+        print(f"🎯 Determined role from email domain: {role}")
+        return email, role
+        
+    except Exception as e:
+        print(f"❌ Error fetching user email/role: {e}")
+        return None, 'user'
+
+def send_incident_fcm_notification(department, emergency_type, user_name, incident_id=None):
+    topic_map = {
+        'Fire Department': 'bfp',
+        'Police Department': 'pnp',
+        'Disaster Management': 'mdrrmo'
+    }
+    
+    # Send to mobile apps (your existing code)
+    topic = topic_map.get(department)
+    if topic:
+        message = messaging.Message(
+            notification=messaging.Notification(
+                title=f"New {department} Emergency",
+                body=f"{emergency_type} reported by {user_name}"
+            ),
+            data={
+                'department': department,
+                'emergencyType': emergency_type,
+                'userName': user_name,
+                'incidentId': str(incident_id) if incident_id else ''
+            },
+            topic=topic
+        )
+
+        try:
+            response = messaging.send(message)
+            print(f"✓ FCM notification sent to {topic}: {response}")
+        except Exception as e:
+            print(f"✗ Failed to send FCM notification: {e}")
+    else:
+        print(f"No FCM topic for department: {department}")
+    
+    # Send to admin dashboard
+    send_to_admin_dashboard(department, emergency_type, user_name, incident_id)
+
+def send_to_admin_dashboard(department, emergency_type, user_name, incident_id=None):
+    try:
+        # Get stored admin FCM tokens
+        if hasattr(app, 'admin_fcm_tokens') and app.admin_fcm_tokens:
+            for admin_data in app.admin_fcm_tokens:
+                admin_token = admin_data['token']
+                
+                message = messaging.Message(
+                    notification=messaging.Notification(
+                        title='🚨 Emergency Alert - Victoria',
+                        body=f'{emergency_type} reported by {user_name} - {department}'
+                    ),
+                    data={
+                        'department': department,
+                        'emergencyType': emergency_type,
+                        'userName': user_name,
+                        'incidentId': str(incident_id) if incident_id else '',
+                        'timestamp': str(int(time.time())),
+                        'location': 'Victoria, Laguna'
+                    },
+                    token=admin_token
+                )
+                
+                response = messaging.send(message)
+                print(f"✓ Admin notification sent: {response}")
+                
+    except Exception as e:
+        print(f"✗ Error sending admin notification: {e}")
+
+# new add
+
+notifications = []
+
+def create_notification(emergency_type, department, user_name, incident_id):
+    """Create a new notification for the incident"""
+    global notifications
+    
+    notification = {
+        'id': f"notif_{int(time.time())}_{incident_id}",
+        'incident_id': incident_id,
+        'title': f"🚨 New {department} Emergency",
+        'message': f"{emergency_type} reported by {user_name}",
+        'department': department,
+        'emergency_type': emergency_type,
+        'user_name': user_name,
+        'timestamp': datetime.now().isoformat(),
+        'read': False,
+        'priority': get_priority_level(emergency_type)
+    }
+    
+    # Add to beginning of list
+    notifications.insert(0, notification)
+    
+    # Keep only last 50 notifications
+    if len(notifications) > 50:
+        notifications = notifications[:50]
+    
+    print(f"✓ Notification created: {notification['id']}")
+    print(f"✓ Total notifications: {len(notifications)}")
+    
+    return notification
+
+
+
+    # SAKA ITO NADAGDAG AT NABAGO GANG
+
+@app.route('/api/profile', methods=['GET'])
+def get_profile():
+    """Get user profile"""
+    try:
+        # Get the authorization header
+        auth_header = request.headers.get('Authorization')
+        if not auth_header:
+            return jsonify({'success': False, 'error': 'Authorization header missing'}), 401
+
+        # Verify the token
+        decoded_token = verify_firebase_token(auth_header)
+        if not decoded_token:
+            return jsonify({'success': False, 'error': 'Invalid or expired token'}), 401
+
+        uid = decoded_token['uid']
+        print(f"📥 GET Profile request for UID: {uid}")
+
+        # Get user document from Firestore
+        user_ref = db.collection('users').document(uid)
+        user_doc = user_ref.get()
+
+        if not user_doc.exists:
+            return jsonify({'success': False, 'error': 'Profile not found'}), 404
+
+        user_data = user_doc.to_dict()
+        print(f"✅ Profile found for UID: {uid}, Role: {user_data.get('role', 'N/A')}")
+
+        return jsonify({
+            'success': True,
+            'user': user_data
+        }), 200
+
+    except Exception as e:
+        print(f"❌ Error in get_profile: {e}")
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+    
+
+
+@app.route('/api/profile', methods=['PUT'])
+def update_profile():
+    """Update user profile with automatic email and role detection"""
+    try:
+        # Get the authorization header
+        auth_header = request.headers.get('Authorization')
+        if not auth_header:
+            return jsonify({'success': False, 'error': 'Authorization header missing'}), 401
+
+        # Verify the token
+        decoded_token = verify_firebase_token(auth_header)
+        if not decoded_token:
+            return jsonify({'success': False, 'error': 'Invalid or expired token'}), 401
+
+        uid = decoded_token['uid']
+        profile_data = request.get_json()
+
+        print(f"📝 UPDATE Profile request for UID: {uid}")
+        print(f"📝 Profile data received: {json.dumps(profile_data, indent=2)}")
+
+        if not profile_data:
+            return jsonify({'success': False, 'error': 'Profile data is required'}), 400
+
+        # Fetch email and role from Firebase Auth
+        email, role = get_user_email_and_role(uid)
+        
+        if not email:
+            return jsonify({'success': False, 'error': 'Could not retrieve user email'}), 400
+
+        # Get existing user document to preserve other fields
+        user_ref = db.collection('users').document(uid)
+        existing_doc = user_ref.get()
+        
+        # Prepare updated user data with fetched email and role
+        updated_data = {
+            'firstName': profile_data.get('firstName', ''),
+            'middleInitial': profile_data.get('middleInitial', ''),
+            'lastName': profile_data.get('lastName', ''),
+            'name': f"{profile_data.get('firstName', '')} {profile_data.get('lastName', '')}".strip(),
+            'phoneNumber': profile_data.get('phoneNumber', ''),
+            'phone': profile_data.get('phoneNumber', ''),  # Alias for phone
+            'gender': profile_data.get('gender', 'Male'),
+            'address': profile_data.get('address', {}),
+            'email': email,  # ✅ Email fetched from Firebase Auth
+            'role': role,    # ✅ Role determined from email domain
+            'profileComplete': True,
+            'lastUpdated': firestore.SERVER_TIMESTAMP,
+        }
+
+        # If this is an existing user, preserve additional fields
+        if existing_doc.exists:
+            existing_data = existing_doc.to_dict()
+            # Preserve createdAt if it exists
+            if 'createdAt' in existing_data:
+                updated_data['createdAt'] = existing_data['createdAt']
+        else:
+            # New user - set creation timestamp
+            updated_data['createdAt'] = firestore.SERVER_TIMESTAMP
+
+        print(f"💾 Updating profile with:")
+        print(f"   - Email: {email}")
+        print(f"   - Role: {role}")
+        print(f"   - Profile Complete: True")
+
+        # Update the user document
+        user_ref.set(updated_data, merge=True)
+
+        print(f"✅ Profile updated successfully for UID: {uid}")
+
+        # Determine navigation page based on role
+        navigate_to_page = 'user'  # default
+        if role == 'bfp':
+            navigate_to_page = 'bfp'
+        elif role == 'pnp':
+            navigate_to_page = 'pnp'
+        elif role == 'mdrrmo':
+            navigate_to_page = 'mdrrmo'
+
+        print(f"🧭 Navigation instruction: {navigate_to_page}")
+
+        return jsonify({
+            'success': True,
+            'message': 'Profile updated successfully',
+            'user': updated_data,
+            'navigateToPage': navigate_to_page  # ✅ Tell frontend where to navigate
+        }), 200
+
+    except Exception as e:
+        print(f"❌ Error in update_profile: {e}")
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+    
+# new add
+    
+@app.route('/api/report_incident', methods=['POST'])
+def report_incident():
+    """Handle incident reporting with enhanced notifications"""
+    try:
+        data = request.get_json()
+        
+        # Basic validation
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+        
+        required_fields = ['emergencyType', 'department', 'userName']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({'success': False, 'error': f'Missing {field}'}), 400
+
+        print(f"=== INCIDENT REPORT REQUEST ===")
+        print(f"Emergency Type: {data.get('emergencyType')}")
+        print(f"Department: {data.get('department')}")
+        print(f"Reporter: {data.get('userName')}")
+
+        # Generate incident ID
+        incident_id = f"INC{int(time.time())}"
+        
+        # Determine priority level
+        priority = get_priority_level(data.get('emergencyType', ''))
+        data['priority'] = priority
+
+        print(f"Incident ID: {incident_id}")
+        print(f"Priority Level: {priority}")
+
+        # Create notification FIRST
+        notification = create_notification(
+            data.get('emergencyType'),
+            data.get('department'),
+            data.get('userName'),
+            incident_id
+        )
+        
+        print(f"✓ Notification created: {notification}")
+
+        # Play immediate sound alert for high/critical incidents
+        if priority in ['critical', 'high']:
+            threading.Thread(target=play_alert_sound, daemon=True).start()
+            print(f"🔊 High priority alert sound triggered")
+
+        # Send FCM notification to mobile apps and admin dashboard
+        send_incident_fcm_notification(
+            data.get('department'),
+            data.get('emergencyType'),
+            data.get('userName'),
+            incident_id
+        )
+
+        # Send real-time notification to admin dashboard
+        send_realtime_notification(notification)
+
+        # Get relevant responders and send email
+        responders = get_relevant_responders(data.get('department'), priority)
+        responder_emails = []
+        for responder in responders:
+            if responder in RESPONDER_EMAILS:
+                responder_emails.append(RESPONDER_EMAILS[responder])
+
+        if responder_emails:
+            print(f"Sending enhanced notifications to: {responder_emails}")
+            subject, body_html, body_text = format_incident_email_with_priority(data)
+            email_sent = send_email(responder_emails, subject, body_html, body_text)
+            print(f"✓ Email sent: {email_sent}")
+
+        return jsonify({
+            'success': True,
+            'message': 'Incident reported successfully. Responders have been notified.',
+            'incident_id': incident_id,
+            'priority': priority,
+            'responders_notified': responders,
+            'sound_alert_triggered': priority in ['critical', 'high'],
+            'notification': notification,
+            'total_notifications': len(notifications)
+        }), 200
+
+    except Exception as e:
+        print(f"✗ Error in report_incident: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error'
+        }), 500
+@app.route('/api/notifications', methods=['GET'])
+def get_notifications():
+    """Get all notifications"""
+    try:
+        global notifications
+        print(f"📋 Getting notifications. Total: {len(notifications)}")
+        
+        unread_count = len([n for n in notifications if not n['read']])
+        
+        return jsonify({
+            'success': True,
+            'notifications': notifications,
+            'unread_count': unread_count,
+            'total_count': len(notifications)
+        })
+    except Exception as e:
+        print(f"✗ Error getting notifications: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/notifications/<notification_id>/read', methods=['POST'])
+def mark_notification_read(notification_id):
+    """Mark notification as read"""
+    try:
+        global notifications
+        found = False
+        for notification in notifications:
+            if notification['id'] == notification_id:
+                notification['read'] = True
+                found = True
+                print(f"✓ Marked notification {notification_id} as read")
+                break
+        
+        if not found:
+            print(f"✗ Notification {notification_id} not found")
+        
+        return jsonify({'success': True, 'found': found})
+    except Exception as e:
+        print(f"✗ Error marking notification read: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/notifications/mark_all_read', methods=['POST'])
+def mark_all_notifications_read():
+    """Mark all notifications as read"""
+    try:
+        global notifications
+        count = 0
+        for notification in notifications:
+            if not notification['read']:
+                notification['read'] = True
+                count += 1
+        
+        print(f"✓ Marked {count} notifications as read")
+        return jsonify({'success': True, 'marked_count': count})
+    except Exception as e:
+        print(f"✗ Error marking all notifications read: {e}")
+        return jsonify({'error': str(e)}), 500
+
+def send_realtime_notification(notification):
+    """Send real-time notification to connected clients"""
+    try:
+        # If using Socket.IO, emit to all connected admin clients
+        # socketio.emit('new_notification', notification, room='admin_room')
+        
+        # For now, we'll just log it and let the frontend poll
+        print(f"✓ Real-time notification ready: {notification['id']}")
+        print(f"✓ Notification details: {notification['title']} - {notification['message']}")
+        
+    except Exception as e:
+        print(f"✗ Error sending real-time notification: {e}")
+
+def send_incident_fcm_notification(department, emergency_type, user_name, incident_id=None):
+    """Send FCM notifications to mobile apps and admin dashboard"""
+    try:
+        # Topic mapping for mobile apps
+        topic_map = {
+            'Fire Department': 'bfp',
+            'Police Department': 'pnp', 
+            'Disaster Management': 'mdrrmo'
+        }
+        
+        # Send to mobile apps
+        topic = topic_map.get(department)
+        if topic:
+            message = messaging.Message(
+                notification=messaging.Notification(
+                    title=f"🚨 New {department} Emergency",
+                    body=f"{emergency_type} reported by {user_name}"
+                ),
+                data={
+                    'department': department,
+                    'emergencyType': emergency_type,
+                    'userName': user_name,
+                    'incidentId': str(incident_id) if incident_id else '',
+                    'timestamp': str(int(time.time())),
+                    'priority': get_priority_level(emergency_type)
+                },
+                topic=topic
+            )
+
+            try:
+                response = messaging.send(message)
+                print(f"✓ FCM notification sent to {topic}: {response}")
+            except Exception as e:
+                print(f"✗ Failed to send FCM notification to {topic}: {e}")
+        
+        # Send to admin dashboard
+        send_to_admin_dashboard(department, emergency_type, user_name, incident_id)
+        
+    except Exception as e:
+        print(f"✗ Error in send_incident_fcm_notification: {e}")
+
+def send_to_admin_dashboard(department, emergency_type, user_name, incident_id=None):
+    """Send FCM notification to admin dashboard"""
+    try:
+        # Check if admin FCM tokens exist
+        if not hasattr(app, 'admin_fcm_tokens') or not app.admin_fcm_tokens:
+            print("⚠️ No admin FCM tokens stored")
+            return
+            
+        for admin_data in app.admin_fcm_tokens:
+            admin_token = admin_data['token']
+            
+            message = messaging.Message(
+                notification=messaging.Notification(
+                    title='🚨 Emergency Alert - Victoria',
+                    body=f'{emergency_type} reported by {user_name} - {department}'
+                ),
+                data={
+                    'department': department,
+                    'emergencyType': emergency_type,
+                    'userName': user_name,
+                    'incidentId': str(incident_id) if incident_id else '',
+                    'timestamp': str(int(time.time())),
+                    'location': 'Victoria, Laguna',
+                    'priority': get_priority_level(emergency_type)
+                },
+                token=admin_token
+            )
+            
+            try:
+                response = messaging.send(message)
+                print(f"✓ Admin FCM notification sent: {response}")
+            except Exception as e:
+                print(f"✗ Failed to send admin FCM notification: {e}")
+                
+    except Exception as e:
+        print(f"✗ Error sending admin notification: {e}")
+
+@app.route('/admin/store_fcm_token', methods=['POST'])
+def store_admin_fcm_token():
+    """Store admin FCM token for push notifications"""
+    try:
+        data = request.json
+        token = data.get('token')
+        role = data.get('role', 'admin')
+        
+        if not token:
+            return jsonify({'error': 'Token is required'}), 400
+        
+        # Initialize admin tokens list if it doesn't exist
+        if not hasattr(app, 'admin_fcm_tokens'):
+            app.admin_fcm_tokens = []
+        
+        # Check if token already exists
+        existing_token = next((t for t in app.admin_fcm_tokens if t['token'] == token), None)
+        
+        if not existing_token:
+            # Add new token
+            app.admin_fcm_tokens.append({
+                'token': token,
+                'role': role,
+                'timestamp': time.time()
+            })
+            print(f"✓ New admin FCM token stored: {token[:20]}...")
+        else:
+            print(f"✓ Admin FCM token already exists: {token[:20]}...")
+        
+        return jsonify({
+            'success': True, 
+            'message': 'FCM token stored successfully',
+            'token_count': len(app.admin_fcm_tokens)
+        })
+    except Exception as e:
+        print(f"✗ Error storing admin FCM token: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# Debug endpoint to check notifications
+@app.route('/debug/notifications', methods=['GET'])
+def debug_notifications():
+    """Debug endpoint to check notification status"""
+    global notifications
+    return jsonify({
+        'total_notifications': len(notifications),
+        'notifications': notifications,
+        'admin_tokens': len(getattr(app, 'admin_fcm_tokens', [])),
+        'latest_notification': notifications[0] if notifications else None
+    })
+
+# Missing function stubs (implement these based on your existing code)
+def play_alert_sound():
+    """Play alert sound"""
+    pass
+
+def get_relevant_responders(department, priority):
+    """Get relevant responders for department"""
+    return ['responder1', 'responder2']  # Replace with your logic
+
+def format_incident_email_with_priority(data):
+    """Format email content"""
+    subject = f"Emergency Alert: {data['emergencyType']}"
+    body_html = f"<p>Emergency: {data['emergencyType']}</p>"
+    body_text = f"Emergency: {data['emergencyType']}"
+    return subject, body_html, body_text
+
+def send_email(emails, subject, body_html, body_text):
+    """Send email notification"""
+    return True  # Replace with your email logic
+
+# Add these constants if not already defined
+RESPONDER_EMAILS = {
+    'responder1': 'responder1@example.com',
+    'responder2': 'responder2@example.com'
+}
+
+# new end
+
+@app.route('/api/send_otp', methods=['POST'])
+def send_otp():
+    """Send OTP to user's email for password reset"""
+    try:
+        data = request.get_json()
+        email = data.get('email', '').strip().lower()
+        
+        if not email:
+            return jsonify({
+                'success': False,
+                'error': 'Email is required'
+            }), 400
+        
+        # Validate email format
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, email):
+            return jsonify({
+                'success': False,
+                'error': 'Invalid email format'
+            }), 400
+        
+        print(f"=== SEND OTP REQUEST ===")
+        print(f"Email: {email}")
+        
+        # Check if user exists in Firebase
+        user_exists, uid = verify_firebase_user_exists(email)
+        if not user_exists:
+            return jsonify({
+                'success': False,
+                'error': 'No account found with this email address'
+            }), 404
+        
+        print(f"✓ User exists in Firebase: {uid}")
+        
+        # Clean up expired OTPs
+        clean_expired_otps()
+        
+        # Generate OTP
+        otp = generate_otp()
+        expires_at = time.time() + 300  # 5 minutes expiry
+        
+        # Store OTP with expiration time
+        otp_storage[email] = {
+            'otp': otp,
+            'expires_at': expires_at,
+            'attempts': 0,
+            'created_at': time.time()
+        }
+        
+        print(f"✓ Generated OTP: {otp}")
+        
+        # Create email content
+        subject = "SafeVictoria - Password Reset Code"
+        body = f"""
+Hello,
+
+You have requested to reset your password for SafeVictoria Mobile App.
+
+Your password reset code is: {otp}
+
+This code will expire in 5 minutes.
+
+If you did not request this password reset, please ignore this email.
+
+Best regards,
+SafeVictoria Team
+        """.strip()
+        
+        # Send email
+        email_sent = send_email(email, subject, body)
+        
+        if email_sent:
+            print(f"✓ OTP sent successfully to {email}")
+            return jsonify({
+                'success': True,
+                'message': 'OTP sent successfully to your email'
+            }), 200
+        else:
+            # Remove OTP from storage if email failed
+            if email in otp_storage:
+                del otp_storage[email]
+            
+            return jsonify({
+                'success': False,
+                'error': 'Failed to send email. Please try again later.'
+            }), 500
+            
+    except Exception as e:
+        print(f"✗ Error in send_otp: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error'
+        }), 500
+
+@app.route('/api/reset_password', methods=['POST'])
+def reset_password():
+    """Reset user password using OTP"""
+    try:
+        data = request.get_json()
+        email = data.get('email', '').strip().lower()
+        otp = data.get('otp', '').strip()
+        new_password = data.get('new_password', '').strip()
+        
+        if not all([email, otp, new_password]):
+            return jsonify({
+                'success': False,
+                'error': 'Email, OTP, and new password are required'
+            }), 400
+        
+        if len(new_password) < 6:
+            return jsonify({
+                'success': False,
+                'error': 'Password must be at least 6 characters long'
+            }), 400
+        
+        print(f"=== RESET PASSWORD REQUEST ===")
+        print(f"Email: {email}")
+        print(f"OTP: {otp}")
+        print(f"New password length: {len(new_password)}")
+        
+        # Clean up expired OTPs
+        clean_expired_otps()
+        
+        # Check if OTP exists and is valid
+        if email not in otp_storage:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid or expired OTP. Please request a new one.'
+            }), 400
+        
+        stored_otp_data = otp_storage[email]
+        
+        # Check if OTP has expired
+        if time.time() > stored_otp_data['expires_at']:
+            del otp_storage[email]
+            return jsonify({
+                'success': False,
+                'error': 'OTP has expired. Please request a new one.'
+            }), 400
+        
+        # Check attempt limit
+        if stored_otp_data['attempts'] >= 5:
+            del otp_storage[email]
+            return jsonify({
+                'success': False,
+                'error': 'Too many failed attempts. Please request a new OTP.'
+            }), 400
+        
+        # Verify OTP
+        if stored_otp_data['otp'] != otp:
+            stored_otp_data['attempts'] += 1
+            remaining_attempts = 5 - stored_otp_data['attempts']
+            
+            if remaining_attempts <= 0:
+                del otp_storage[email]
+                return jsonify({
+                    'success': False,
+                    'error': 'Invalid OTP. Maximum attempts exceeded.'
+                }), 400
+            
+            return jsonify({
+                'success': False,
+                'error': f'Invalid OTP. {remaining_attempts} attempts remaining.'
+            }), 400
+        
+        print(f"✓ OTP verified successfully")
+        
+        # Get user from Firebase
+        user_exists, uid = verify_firebase_user_exists(email)
+        if not user_exists:
+            return jsonify({
+                'success': False,
+                'error': 'User account not found'
+            }), 404
+        
+        # Update password in Firebase Authentication
+        try:
+            auth.update_user(uid, password=new_password)
+            print(f"✓ Password updated successfully in Firebase")
+        except Exception as e:
+            print(f"✗ Error updating Firebase password: {e}")
+            return jsonify({
+                'success': False,
+                'error': 'Failed to update password. Please try again.'
+            }), 500
+        
+        # Remove OTP from storage after successful reset
+        del otp_storage[email]
+        
+        # Send confirmation email
+        try:
+            subject = "SafeVictoria - Password Reset Successful"
+            body = f"""
+Hello,
+
+Your password for SafeVictoria Mobile App has been successfully reset.
+
+If you did not perform this action, please contact support immediately.
+
+Best regards,
+SafeVictoria Team
+            """.strip()
+            
+            send_email(email, subject, body)
+        except Exception as e:
+            print(f"Warning: Failed to send confirmation email: {e}")
+            # Don't fail the entire request if confirmation email fails
+        
+        return jsonify({
+            'success': True,
+            'message': 'Password reset successfully'
+        }), 200
+        
+    except Exception as e:
+        print(f"✗ Error in reset_password: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error'
+        }), 500
+
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    """Health check endpoint"""
+    return jsonify({
+        'success': True,
+        'message': 'Server is running',
+        'timestamp': datetime.now().isoformat()
+    }), 200
+
+# Debug endpoint to check OTP storage (remove in production)
+@app.route('/api/debug/otp_storage', methods=['GET'])
+def debug_otp_storage():
+    """Debug endpoint to check OTP storage - REMOVE IN PRODUCTION"""
+    if not app.debug:
+        return jsonify({'error': 'Not available in production'}), 404
+    
+    clean_expired_otps()
+    
+    # Don't expose actual OTPs, just metadata
+    debug_data = {}
+    for email, data in otp_storage.items():
+        debug_data[email] = {
+            'has_otp': True,
+            'expires_at': datetime.fromtimestamp(data['expires_at']).isoformat(),
+            'attempts': data['attempts'],
+            'created_at': datetime.fromtimestamp(data['created_at']).isoformat(),
+            'expired': time.time() > data['expires_at']
+        }
+    
+    return jsonify({
+        'success': True,
+        'otp_storage_count': len(otp_storage),
+        'data': debug_data
+    }), 200
+
+
+# GANG DITOO
+
+
+admin_dashboard?????
+
+
+
+ /* new add */
+
+        .notification-item {
+            transition: all 0.2s ease;
+        }
+
+        .notification-item:hover {
+            background-color: #f9fafb;
+        }
+
+        .notification-item.unread {
+            border-left: 3px solid #3b82f6;
+        }
+
+        #notificationDropdown {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .notification-dot {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Responsive notification dropdown */
+        @media (max-width: 768px) {
+            #notificationDropdown {
+                width: 90vw;
+                right: -50px;
+            }
+        }
+
+
+        <!-- new add -->
+                        
+                        <!-- Notification Bell -->
+                <div class="relative">
+                    <button id="notificationBell" 
+                            class="relative p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg transition-colors duration-200">
+                        <i data-feather="bell" class="w-6 h-6"></i>
+                        <!-- Notification Badge -->
+                        <span id="notificationBadge" 
+                              class="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center hidden">
+                            0
+                        </span>
+                    </button>
+
+                    <!-- Notification Dropdown -->
+                    <div id="notificationDropdown" 
+                         class="absolute top-full right-0 mt-2 w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 hidden">
+                        <!-- Header -->
+                        <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+                            <h3 class="font-semibold text-gray-900">Emergency Notifications</h3>
+                            <button id="markAllRead" 
+                                    class="text-sm text-blue-600 hover:text-blue-800 transition-colors font-medium">
+                                Mark all read
+                            </button>
+                        </div>
+                        
+                        <!-- Notification List -->
+                        <div id="notificationList" class="max-h-96 overflow-y-auto">
+                            <!-- Empty State (will be replaced by JavaScript) -->
+                            <div id="emptyState" class="p-8 text-center text-gray-500">
+                                <i data-feather="bell" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+                                <p>No notifications yet</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Footer -->
+                        <div class="p-3 border-t border-gray-100">
+                            <a href="/admin_incidents" 
+                               class="block text-center text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors">
+                                View All Incidents →
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            <!-- new add -->
+
+
+            <!-- new add -->
+    <!-- Notification Container -->
+    <div id="notificationContainer"></div>
+<!-- new add -->
+
+
+
+
+// new add
+
+        // Notification system JavaScript
+class NotificationSystem {
+    constructor() {
+        this.notifications = [];
+        this.unreadCount = 0;
+        this.pollInterval = null;
+        this.isDropdownOpen = false;
+        
+        this.initializeElements();
+        this.bindEvents();
+        this.startPolling();
+        this.requestNotificationPermission();
+        this.initializeFCM();
+    }
+    
+    initializeElements() {
+        // Get DOM elements
+        this.notificationBell = document.getElementById('notificationBell');
+        this.notificationBadge = document.getElementById('notificationBadge');
+        this.notificationDropdown = document.getElementById('notificationDropdown');
+        this.notificationList = document.getElementById('notificationList');
+        this.markAllReadBtn = document.getElementById('markAllRead');
+        this.emptyState = document.getElementById('emptyState');
+        
+        // Ensure elements exist
+        if (!this.notificationBell) {
+            console.error('Notification bell element not found');
+            return;
+        }
+        
+        console.log('✓ Notification system elements initialized');
+    }
+    
+    bindEvents() {
+        if (!this.notificationBell) return;
+        
+        // Toggle dropdown
+        this.notificationBell.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleDropdown();
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!this.notificationDropdown.contains(e.target) && 
+                !this.notificationBell.contains(e.target)) {
+                this.closeDropdown();
+            }
+        });
+        
+        // Mark all as read
+        if (this.markAllReadBtn) {
+            this.markAllReadBtn.addEventListener('click', () => {
+                this.markAllAsRead();
+            });
+        }
+        
+        console.log('✓ Notification events bound');
+    }
+    
+    async startPolling() {
+        // Initial load
+        await this.fetchNotifications();
+        
+        // Poll every 5 seconds
+        this.pollInterval = setInterval(() => {
+            this.fetchNotifications();
+        }, 5000);
+        
+        console.log('✓ Notification polling started');
+    }
+    
+    async fetchNotifications() {
+        try {
+            const response = await fetch('/api/notifications');
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                const newNotifications = data.notifications || [];
+                const previousCount = this.unreadCount;
+                
+                this.notifications = newNotifications;
+                this.unreadCount = data.unread_count || 0;
+                
+                console.log(`📋 Fetched ${newNotifications.length} notifications, ${this.unreadCount} unread`);
+                
+                // Show browser notification for new alerts
+                if (this.unreadCount > previousCount && newNotifications.length > 0) {
+                    this.showBrowserNotification(newNotifications[0]);
+                    this.playNotificationSound();
+                }
+                
+                this.updateUI();
+            } else {
+                console.error('Failed to fetch notifications:', data.error);
+            }
+        } catch (error) {
+            console.error('Error fetching notifications:', error);
+        }
+    }
+    
+    updateUI() {
+        if (!this.notificationBell) return;
+        
+        // Update badge
+        if (this.notificationBadge) {
+            if (this.unreadCount > 0) {
+                this.notificationBadge.textContent = this.unreadCount > 99 ? '99+' : this.unreadCount;
+                this.notificationBadge.classList.remove('hidden');
+                this.notificationBell.classList.add('text-red-600');
+            } else {
+                this.notificationBadge.classList.add('hidden');
+                this.notificationBell.classList.remove('text-red-600');
+            }
+        }
+        
+        // Update dropdown content
+        this.updateDropdownContent();
+        
+        console.log(`🔔 UI updated - ${this.unreadCount} unread notifications`);
+    }
+    
+    updateDropdownContent() {
+        if (!this.notificationList) return;
+        
+        if (this.notifications.length === 0) {
+            this.notificationList.innerHTML = `
+                <div id="emptyState" class="p-8 text-center text-gray-500">
+                    <i data-feather="bell" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+                    <p>No notifications yet</p>
+                </div>
+            `;
+            // Re-render feather icons
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
+            return;
+        }
+        
+        const notificationsHTML = this.notifications.map(notification => 
+            this.createNotificationHTML(notification)
+        ).join('');
+        
+        this.notificationList.innerHTML = notificationsHTML;
+        
+        // Add click handlers for notifications
+        this.addNotificationClickHandlers();
+        
+        // Re-render feather icons
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+    }
+    
+    createNotificationHTML(notification) {
+        const timeAgo = this.getTimeAgo(notification.timestamp);
+        const priorityColor = this.getPriorityColor(notification.priority);
+        const readClass = notification.read ? 'bg-gray-50' : 'bg-blue-50';
+        const dotClass = notification.read ? 'bg-gray-400' : 'bg-blue-600';
+        
+        return `
+            <div class="notification-item p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors ${readClass}" 
+                 data-notification-id="${notification.id}">
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0">
+                        <div class="w-3 h-3 rounded-full ${dotClass}"></div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between">
+                            <p class="text-sm font-medium text-gray-900 truncate">
+                                ${notification.title}
+                            </p>
+                            <div class="flex items-center space-x-2">
+                                <span class="px-2 py-1 text-xs rounded-full ${priorityColor}">
+                                    ${notification.priority}
+                                </span>
+                                <span class="text-xs text-gray-500">${timeAgo}</span>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-1">
+                            ${notification.message}
+                        </p>
+                        <p class="text-xs text-gray-500 mt-1">
+                            ${notification.department} • ID: ${notification.incident_id}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    getPriorityColor(priority) {
+        switch (priority) {
+            case 'critical':
+                return 'bg-red-100 text-red-800';
+            case 'high':
+                return 'bg-orange-100 text-orange-800';
+            case 'medium':
+                return 'bg-yellow-100 text-yellow-800';
+            default:
+                return 'bg-gray-100 text-gray-800';
+        }
+    }
+    
+    addNotificationClickHandlers() {
+        const notificationItems = this.notificationList.querySelectorAll('.notification-item');
+        
+        notificationItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                const notificationId = e.currentTarget.getAttribute('data-notification-id');
+                this.markAsRead(notificationId);
+                
+                // Optionally redirect to incident details
+                // window.location.href = `/admin_incidents?id=${notificationId}`;
+            });
+        });
+    }
+    
+    async markAsRead(notificationId) {
+        try {
+            const response = await fetch(`/api/notifications/${notificationId}/read`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                // Update local state
+                const notification = this.notifications.find(n => n.id === notificationId);
+                if (notification && !notification.read) {
+                    notification.read = true;
+                    this.unreadCount = Math.max(0, this.unreadCount - 1);
+                    this.updateUI();
+                }
+                
+                console.log(`✓ Marked notification ${notificationId} as read`);
+            }
+        } catch (error) {
+            console.error('Error marking notification as read:', error);
+        }
+    }
+    
+    async markAllAsRead() {
+        try {
+            const response = await fetch('/api/notifications/mark_all_read', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                // Update local state
+                this.notifications.forEach(n => n.read = true);
+                this.unreadCount = 0;
+                this.updateUI();
+                
+                console.log('✓ All notifications marked as read');
+            }
+        } catch (error) {
+            console.error('Error marking all notifications as read:', error);
+        }
+    }
+    
+    toggleDropdown() {
+        if (this.isDropdownOpen) {
+            this.closeDropdown();
+        } else {
+            this.openDropdown();
+        }
+    }
+    
+    openDropdown() {
+        if (this.notificationDropdown) {
+            this.notificationDropdown.classList.remove('hidden');
+            this.isDropdownOpen = true;
+            
+            // Refresh notifications when opening dropdown
+            this.fetchNotifications();
+        }
+    }
+    
+    closeDropdown() {
+        if (this.notificationDropdown) {
+            this.notificationDropdown.classList.add('hidden');
+            this.isDropdownOpen = false;
+        }
+    }
+    
+    getTimeAgo(timestamp) {
+        const now = new Date();
+        const time = new Date(timestamp);
+        const diffMs = now - time;
+        const diffSecs = Math.floor(diffMs / 1000);
+        const diffMins = Math.floor(diffSecs / 60);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+        
+        if (diffDays > 0) {
+            return `${diffDays}d ago`;
+        } else if (diffHours > 0) {
+            return `${diffHours}h ago`;
+        } else if (diffMins > 0) {
+            return `${diffMins}m ago`;
+        } else {
+            return 'Just now';
+        }
+    }
+    
+    requestNotificationPermission() {
+        if ('Notification' in window) {
+            if (Notification.permission === 'default') {
+                Notification.requestPermission().then(permission => {
+                    console.log('Notification permission:', permission);
+                });
+            }
+        }
+    }
+    
+    showBrowserNotification(notification) {
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification(notification.title, {
+                body: notification.message,
+                icon: '/static/images/emergency-icon.png', // Add your icon path
+                badge: '/static/images/emergency-badge.png',
+                requireInteraction: true,
+                tag: notification.id
+            });
+        }
+    }
+    
+    playNotificationSound() {
+        try {
+            const audio = new Audio('/static/sounds/notification.mp3'); // Add your sound file
+            audio.volume = 0.5;
+            audio.play().catch(e => {
+                console.log('Could not play notification sound:', e);
+            });
+        } catch (error) {
+            console.log('Notification sound not available');
+        }
+    }
+    
+    initializeFCM() {
+        // Store FCM token for admin dashboard
+        if ('serviceWorker' in navigator && 'firebase' in window) {
+            this.setupFirebaseMessaging();
+        }
+    }
+    
+    setupFirebaseMessaging() {
+        // Initialize Firebase if not already done
+        if (typeof firebase === 'undefined') {
+            console.log('Firebase not loaded');
+            return;
+        }
+        
+        try {
+            const messaging = firebase.messaging();
+            
+            // Get FCM token
+            messaging.getToken({ vapidKey: 'YOUR_VAPID_KEY' }).then((currentToken) => {
+                if (currentToken) {
+                    console.log('FCM Token:', currentToken);
+                    this.storeFCMToken(currentToken);
+                } else {
+                    console.log('No FCM registration token available.');
+                }
+            }).catch((err) => {
+                console.log('An error occurred while retrieving token. ', err);
+            });
+            
+            // Handle foreground messages
+            messaging.onMessage((payload) => {
+                console.log('FCM Message received:', payload);
+                
+                // Create notification object
+                const notification = {
+                    id: `fcm_${Date.now()}`,
+                    title: payload.notification.title,
+                    message: payload.notification.body,
+                    timestamp: new Date().toISOString(),
+                    read: false,
+                    priority: payload.data.priority || 'medium'
+                };
+                
+                // Add to notifications
+                this.notifications.unshift(notification);
+                this.unreadCount++;
+                this.updateUI();
+                
+                // Show browser notification
+                this.showBrowserNotification(notification);
+                this.playNotificationSound();
+            });
+        } catch (error) {
+            console.error('Error setting up FCM:', error);
+        }
+    }
+    
+    async storeFCMToken(token) {
+        try {
+            const response = await fetch('/admin/store_fcm_token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    token: token,
+                    role: 'admin'
+                })
+            });
+            
+            if (response.ok) {
+                console.log('✓ FCM token stored successfully');
+            }
+        } catch (error) {
+            console.error('Error storing FCM token:', error);
+        }
+    }
+    
+    destroy() {
+        if (this.pollInterval) {
+            clearInterval(this.pollInterval);
+        }
+    }
+}
+
+// Initialize notification system when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Initializing notification system...');
+    
+    // Wait a bit to ensure all elements are rendered
+    setTimeout(() => {
+        window.notificationSystem = new NotificationSystem();
+    }, 500);
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (window.notificationSystem) {
+        window.notificationSystem.destroy();
+    }
+});
+// new end

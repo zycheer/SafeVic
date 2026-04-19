@@ -1,0 +1,71 @@
+name: capstone_app
+description: "A new Flutter project."
+publish_to: 'none' 
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  http: ^1.2.1
+  firebase_auth: ^4.17.0
+  firebase_core: ^2.30.0
+  cloud_firestore: ^4.17.0 
+  google_sign_in: ^6.1.6
+  geolocator: ^9.0.2
+  permission_handler: ^11.0.1
+  cupertino_icons: ^1.0.8
+  image_picker: ^1.0.4
+  firebase_storage: ^11.5.6
+  flutter_map: ^6.2.0
+  latlong2: ^0.9.0
+  url_launcher: ^6.2.2
+  geocoding: ^2.1.0
+  flutter_polyline_points: ^2.0.0
+  audioplayers: ^5.0.0
+  flutter_local_notifications: ^19.4.2
+  firebase_messaging: ^14.7.20
+  vibration: ^3.1.4  # ✅ CORRECTED VERSION
+  image: ^4.0.17
+  path_provider: ^2.1.0
+  shared_preferences: ^2.2.2
+  firebase_analytics: ^10.7.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_native_splash: ^2.4.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/logo.png"
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/vic.jpg
+    - assets/images/logo.png
+    - assets/logo.png
+    - assets/images/viclogo.png
+    - assets/images/mdrrmologo.png
+    - assets/images/pnplogo.png
+    - assets/images/bfplogo.png
+    - assets/sounds/success.mp3
+    - assets/sounds/alert.mp3
+    - assets/sounds/alert2.mp3
+
+flutter_native_splash:
+  color: "#ffffff"
+  image: assets/logo.png
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/logo.png"

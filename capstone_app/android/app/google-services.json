@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "266861350362",
+    "firebase_url": "https://emerg-91167-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "emerg-91167",
+    "storage_bucket": "emerg-91167.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:266861350362:android:2af2ddb0471de9c1c504e3",
+        "android_client_info": {
+          "package_name": "com.example.capstone_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB8v5t_A6CZNjpCPumdY8aUJwfeoF6K0JU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,5 @@
+[x] push notif to all rescuer
+[x] audio call
+[-] photo incident not working
+[x] logo of victoria loig/register
+[-] register otp, photo proof of responders

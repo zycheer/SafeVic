@@ -1,0 +1,2427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rescuer Management – 1 Tap Emergency</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.js"></script>
+    <style>
+        /* Keep your existing CSS styles here */
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .pulse-dot {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .sidebar-item {
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-item:hover {
+            transform: translateX(4px);
+        }
+
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.2);
+            border-left: 4px solid #fff;
+        }
+
+        .table-row {
+            transition: all 0.2s ease;
+        }
+
+        .table-row:hover {
+            background-color: #f8fafc;
+            transform: scale(1.01);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .modal-backdrop {
+            backdrop-filter: blur(5px);
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background-color: #10b981;
+            color: white;
+        }
+
+        .notification.error {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        .notification.info {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .glass-effect { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1),0 10px 10px -5px rgba(0,0,0,0.04); }
+        .pulse-dot { animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite; }
+        @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+        .sidebar-item { transition: all 0.2s ease; }
+        .sidebar-item:hover { transform: translateX(4px); }
+        .nav-link.active { background: rgba(255, 255, 255, 0.2); border-left: 4px solid #fff; }
+        .table-row { transition: all 0.2s ease; }
+        .table-row:hover { background-color: #f8fafc; transform: scale(1.01); }
+        .status-badge { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
+        .modal-backdrop { backdrop-filter: blur(5px); background-color: rgba(0,0,0,0.5); }
+        .modal-content { animation: modalSlideIn 0.3s ease-out; }
+        @keyframes modalSlideIn { from{opacity:0;transform:translateY(-20px);} to{opacity:1;transform:translateY(0);} }
+        @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+        .animate-spin { animation: spin 1s linear infinite; }
+        .hidden { display: none !important; }
+        .notification { position: fixed; top: 20px; right: 20px; z-index: 1000; max-width: 400px; padding: 16px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); transform: translateX(400px); transition: transform 0.3s ease; }
+        .notification.show { transform: translateX(0); }
+        .notification.success { background-color: #10b981; color: white; }
+        .notification.error { background-color: #ef4444; color: white; }
+        .notification.info { background-color: #3b82f6; color: white; }
+            </style>
+</head>
+<body class="bg-gray-50">
+    <div class="h-screen flex overflow-hidden">
+        <!-- Enhanced Sidebar -->
+        <aside class="w-72 gradient-bg text-white flex flex-col shadow-2xl">
+            <div class="px-6 py-6 flex items-center gap-3">
+                <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center overflow-hidden">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSYCzw5uA80Mf1gPVyvJn5RPMk8QLv0zXiLIQ&s" alt="Victoria Logo" style="width:100%;height:100%;object-fit:cover;">
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold">Emergency Admin</h1>
+                    <p class="text-white/70 text-sm">Victoria, Laguna</p>
+                </div>
+            </div>
+            
+            <!-- Quick Stats in Sidebar -->
+            <div class="px-4 mb-6">
+                <div class="glass-effect rounded-xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-white/80 text-sm">System Status</span>
+                        <div class="w-2 h-2 bg-green-400 rounded-full pulse-dot"></div>
+                    </div>
+                    <div class="text-2xl font-bold">Online</div>
+                </div>
+            </div>
+            
+            <nav class="flex-1 px-4 space-y-2">
+                <a href="/" class="sidebar-item nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all">
+                    <i data-feather="home" class="w-5 h-5"></i>
+                    <span class="font-medium">Dashboard</span>
+                </a>
+                <a href="/admin_incidents" class="sidebar-item nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all">
+                    <i data-feather="alert-circle" class="w-5 h-5"></i>
+                    <span class="font-medium">Incidents</span>
+                </a>
+                <a href="/admin_analytics" class="sidebar-item nav-link active flex items-center gap-3 px-4 py-3 rounded-xl bg-white/20 backdrop-blur-sm">
+                    <i data-feather="users" class="w-5 h-5"></i>
+                    <span class="font-medium">Rescuers</span>
+                    <span class="ml-auto bg-blue-500 text-white text-xs px-2 py-1 rounded-full" id="rescuerCount">0</span>
+                </a>
+                <a href="/admin_analytics" class="sidebar-item nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all">
+                    <i data-feather="bar-chart-2" class="w-5 h-5"></i>
+                    <span class="font-medium">Analytics</span>
+                </a>
+                <a href="#settings" class="sidebar-item nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all">
+                    <i data-feather="settings" class="w-5 h-5"></i>
+                    <span class="font-medium">Settings</span>
+                </a>
+                <a href="#" id="logoutBtn" class="sidebar-item nav-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all">
+                    <i data-feather="log-out" class="w-5 h-5"></i>
+                    <span class="font-medium">Logout</span>
+                </a>
+            </nav>
+            
+            <!-- User Profile -->
+            <div class="p-4">
+                <div class="glass-effect rounded-xl p-4 flex items-center gap-3">
+                    <img class="w-10 h-10 rounded-lg ring-2 ring-white/30" src="https://api.dicebear.com/8.x/identicon/svg?seed=Admin" alt="Admin Avatar">
+                    <div class="flex-1">
+                        <div class="font-semibold">Admin User</div>
+                        <div class="text-white/70 text-sm">System Administrator</div>
+                    </div>
+                    <button onclick="handleLogout(event)" class="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                        <i data-feather="log-out" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Enhanced Header -->
+            <header class="bg-white shadow-sm border-b border-gray-200">
+                <div class="px-8 py-4 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <h2 class="text-2xl font-bold text-gray-900">Rescuer Management</h2>
+                        <div class="hidden md:flex items-center gap-2 text-sm text-gray-500">
+                            <i data-feather="calendar" class="w-4 h-4"></i>
+                            <span id="currentDate"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-4">
+                        <!-- Add Rescuer Button -->
+                        <button id="addRescuerBtn" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors">
+                            <i data-feather="user-plus" class="w-4 h-4"></i>
+                            Add Rescuer
+                        </button>
+
+                        
+                        <!-- Export Button -->
+                        <button id="exportBtn" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
+                            <i data-feather="download" class="w-4 h-4"></i>
+                            Export List
+                        </button>
+                        
+                        <!-- Real-time indicator -->
+                        <div class="flex items-center gap-2">
+                            <div class="w-2 h-2 bg-green-500 rounded-full pulse-dot"></div>
+                            <span class="text-sm text-gray-600">Live Updates</span>
+                        </div>
+                        
+                        <!-- Refresh Button -->
+                        <button id="refreshBtn" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors">
+                            <i data-feather="refresh-cw" class="w-4 h-4"></i>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+            </header>
+            
+<!-- Add/Register Rescuer Modal -->
+<div id="editRescuerModal" class="fixed inset-0 z-50 hidden modal-backdrop">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="modal-content bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-screen overflow-y-auto">
+            <div class="sticky top-0 bg-white px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 class="text-xl font-bold text-gray-900" id="editModalTitle">Register New Rescuer</h3>
+                <button id="closeEditModal" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
+                    <i data-feather="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="p-6">
+                <!-- Registration vs Edit Mode Indicator -->
+                <div id="registrationModeIndicator" class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="flex items-center gap-2 text-blue-800">
+                        <i data-feather="user-plus" class="w-5 h-5"></i>
+                        <span class="font-medium">Registration Mode</span>
+                        <span class="text-sm text-blue-600">- This will create a new Firebase account for the rescuer</span>
+                    </div>
+                </div>
+
+                <form id="editRescuerForm" class="space-y-6">
+                    <!-- Authentication Information (Only for Registration) -->
+                    <div id="authSection" class="bg-red-50 rounded-lg p-4 border-2 border-red-200">
+                        <h4 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <i data-feather="shield" class="w-5 h-5 text-red-600"></i>
+                            Account Security
+                            <span class="text-sm font-normal text-red-600">(Registration Only)</span>
+                        </h4>
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div>
+                                <label for="edit_email" class="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
+                                <input type="email" id="edit_email" name="email" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="rescuer@example.com">
+                                <small class="text-gray-500">This will be used for login</small>
+                            </div>
+                            <div>
+                                <label for="edit_password" class="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+                                <div class="relative">
+                                    <input type="password" id="edit_password" name="password" required minlength="6"
+                                           class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                           placeholder="Minimum 6 characters">
+                                    <button type="button" onclick="togglePasswordVisibility('edit_password')" 
+                                            class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                        <i data-feather="eye" class="w-4 h-4 text-gray-400"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <label for="edit_confirmPassword" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password *</label>
+                            <div class="relative">
+                                <input type="password" id="edit_confirmPassword" name="confirmPassword" required minlength="6"
+                                       class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="Re-enter password">
+                                <button type="button" onclick="togglePasswordVisibility('edit_confirmPassword')" 
+                                        class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                    <i data-feather="eye" class="w-4 h-4 text-gray-400"></i>
+                                </button>
+                            </div>
+                            <small class="text-gray-500">Must match the password above</small>
+                        </div>
+                    </div>
+
+                    <!-- Personal Information -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <i data-feather="user" class="w-5 h-5 text-indigo-600"></i>
+                            Personal Information
+                        </h4>
+                        <div class="grid gap-4 md:grid-cols-3">
+                            <div>
+                                <label for="edit_firstName" class="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+                                <input type="text" id="edit_firstName" name="firstName" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="Enter first name">
+                            </div>
+                            <div>
+                                <label for="edit_middleInitial" class="block text-sm font-medium text-gray-700 mb-1">Middle Initial</label>
+                                <input type="text" id="edit_middleInitial" name="middleInitial" maxlength="1"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="M">
+                            </div>
+                            <div>
+                                <label for="edit_lastName" class="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+                                <input type="text" id="edit_lastName" name="lastName" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="Enter last name">
+                            </div>
+                        </div>
+                        <div class="grid gap-4 md:grid-cols-2 mt-4">
+                            <div>
+                                <label for="edit_gender" class="block text-sm font-medium text-gray-700 mb-1">Gender *</label>
+                                <select id="edit_gender" name="gender" required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="">Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="edit_phoneNumber" class="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
+                                <input type="tel" id="edit_phoneNumber" name="phoneNumber" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="09XXXXXXXXX">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Professional Information -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <i data-feather="briefcase" class="w-5 h-5 text-indigo-600"></i>
+                            Professional Information
+                        </h4>
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div>
+                                <label for="edit_role" class="block text-sm font-medium text-gray-700 mb-1">Agency/Role *</label>
+                                <select id="edit_role" name="role" required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="">Select Role</option>
+                                    <option value="bfp">BFP (Bureau of Fire Protection)</option>
+                                    <option value="mdrrmo">MDRRMO (Disaster Risk Reduction)</option>
+                                    <option value="pnp">PNP (Philippine National Police)</option>
+                                    <option value="user">Medical (Emergency Medical Services)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="edit_emergencyContact" class="block text-sm font-medium text-gray-700 mb-1">Emergency Contact</label>
+                                <input type="tel" id="edit_emergencyContact" name="emergencyContact"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="09XXXXXXXXX">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Address Information -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <i data-feather="map-pin" class="w-5 h-5 text-indigo-600"></i>
+                            Address Information
+                        </h4>
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div>
+                                <label for="edit_province" class="block text-sm font-medium text-gray-700 mb-1">Province *</label>
+                                <select id="edit_province" name="province" required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="">Select Province</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="edit_municipality" class="block text-sm font-medium text-gray-700 mb-1">Municipality/City *</label>
+                                <select id="edit_municipality" name="municipality" required disabled
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100">
+                                    <option value="">Select Municipality</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid gap-4 md:grid-cols-2 mt-4">
+                            <div>
+                                <label for="edit_barangay" class="block text-sm font-medium text-gray-700 mb-1">Barangay *</label>
+                                <select id="edit_barangay" name="barangay" required disabled
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100">
+                                    <option value="">Select Barangay</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="edit_street" class="block text-sm font-medium text-gray-700 mb-1">Street Address *</label>
+                                <input type="text" id="edit_street" name="street" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="Street name and number">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex justify-end gap-3 pt-6 border-t border-gray-200">
+                        <button type="button" onclick="closeEditModal()" 
+                                class="flex items-center gap-2 px-6 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                            <i data-feather="x" class="w-4 h-4"></i>
+                            Cancel
+                        </button>
+                        <button type="submit" id="saveRescuerBtn"
+                                class="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors">
+                            <i data-feather="user-plus" class="w-4 h-4"></i>
+                            Register Rescuer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+            <!-- Main Content -->
+            <main class="flex-1 overflow-y-auto bg-gradient-to-br from-gray-50 to-gray-100">
+                <div class="p-8 space-y-8">
+                    <!-- Loading State -->
+                    <div id="loadingState" class="hidden flex items-center justify-center py-12">
+                        <div class="flex items-center gap-3 text-gray-600">
+                            <i data-feather="loader" class="w-6 h-6 animate-spin"></i>
+                            <span>Loading rescuers...</span>
+                        </div>
+                    </div>
+
+                    <!-- Error State -->
+                    <div id="errorState" class="hidden bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div class="flex items-center gap-2 text-red-800">
+                            <i data-feather="alert-circle" class="w-5 h-5"></i>
+                            <span id="errorMessage">Error loading rescuers. Please try again.</span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats Cards -->
+                    <section class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="bg-white rounded-2xl shadow-lg p-6 card-hover">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Total Rescuers</p>
+                                    <p class="text-3xl font-bold text-gray-900" id="totalRescuers">0</p>
+                                </div>
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <i data-feather="users" class="w-6 h-6 text-blue-600"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-2xl shadow-lg p-6 card-hover">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Active Now</p>
+                                    <p class="text-3xl font-bold text-green-600" id="activeRescuers">0</p>
+                                </div>
+                                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <i data-feather="activity" class="w-6 h-6 text-green-600"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-2xl shadow-lg p-6 card-hover">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">On Assignment</p>
+                                    <p class="text-3xl font-bold text-orange-600" id="busyRescuers">0</p>
+                                </div>
+                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                                    <i data-feather="clock" class="w-6 h-6 text-orange-600"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-2xl shadow-lg p-6 card-hover">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Off Duty</p>
+                                    <p class="text-3xl font-bold text-gray-600" id="offDutyRescuers">0</p>
+                                </div>
+                                <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                                    <i data-feather="moon" class="w-6 h-6 text-gray-600"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Filters and Search -->
+                    <section class="bg-white rounded-2xl shadow-lg p-6">
+                        <div class="flex flex-wrap gap-4 items-center">
+                            <!-- Search -->
+                            <div class="flex-1 min-w-64">
+                                <div class="relative">
+                                    <i data-feather="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4"></i>
+                                    <input type="text" id="searchInput" placeholder="Search by contact, email, location, specialization..." 
+                                           class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                </div>
+                            </div>
+                            
+                            <!-- Status Filter -->
+                            <select id="statusFilter" class="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="busy">On Assignment</option>
+                                <option value="offline">Off Duty</option>
+                            </select>
+                            
+                            <!-- Type Filter -->
+                            <select id="typeFilter" class="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">All Types</option>
+                                <option value="BFP">BFP</option>
+                                <option value="MEDICAL">MEDICAL</option>
+                                <option value="PNP">PNP</option>
+                                <option value="MDRRMO">MDRRMO</option>
+                            </select>
+                            
+                            <!-- Clear Filters -->
+                            <button id="clearFilters" class="px-4 py-3 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors">
+                                <i data-feather="x" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </section>
+
+                    <!-- Rescuers Table -->
+                    <section class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                            <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <i data-feather="users" class="w-5 h-5 text-indigo-600"></i>
+                                Rescuer Directory
+                            </h3>
+                            <div class="flex items-center gap-2 text-sm text-gray-500">
+                                <span>Showing</span>
+                                <span id="showingCount">0</span>
+                                <span>rescuers</span>
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                            Rescuer Info
+                                        </th>
+                                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                            Contact
+                                        </th>
+                                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                            Type & Specialization
+                                        </th>
+                                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                            Location
+                                        </th>
+                                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                            Status
+                                        </th>
+                                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                            Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="rescuersTableBody" class="bg-white divide-y divide-gray-200">
+                                    <!-- Table rows will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Rescuer Detail Modal -->
+    <div id="rescuerModal" class="fixed inset-0 z-50 hidden modal-backdrop">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="modal-content bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-screen overflow-y-auto">
+                <div class="sticky top-0 bg-white px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                    <h3 class="text-xl font-bold text-gray-900" id="modalTitle">Rescuer Details</h3>
+                    <button id="closeModal" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
+                        <i data-feather="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                
+                <div class="p-6" id="modalContent">
+                    <!-- Modal content will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- Add/Edit Rescuer Modal -->
+<div id="editRescuerModal" class="fixed inset-0 z-50 hidden modal-backdrop">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="modal-content bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-screen overflow-y-auto">
+            <div class="sticky top-0 bg-white px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 class="text-xl font-bold text-gray-900" id="editModalTitle">Add New Rescuer</h3>
+                <button id="closeEditModal" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
+                    <i data-feather="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="p-6">
+                <form id="editRescuerForm" class="space-y-6">
+                    <!-- Personal Information -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <i data-feather="user" class="w-5 h-5 text-indigo-600"></i>
+                            Personal Information
+                        </h4>
+                        <div class="grid gap-4 md:grid-cols-3">
+                            <div>
+                                <label for="edit_firstName" class="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+                                <input type="text" id="edit_firstName" name="firstName" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="Enter first name">
+                            </div>
+                            <div>
+                                <label for="edit_middleInitial" class="block text-sm font-medium text-gray-700 mb-1">Middle Initial</label>
+                                <input type="text" id="edit_middleInitial" name="middleInitial" maxlength="1"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="M">
+                            </div>
+                            <div>
+                                <label for="edit_lastName" class="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+                                <input type="text" id="edit_lastName" name="lastName" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="Enter last name">
+                            </div>
+                        </div>
+                        <div class="grid gap-4 md:grid-cols-2 mt-4">
+                            <div>
+                                <label for="edit_gender" class="block text-sm font-medium text-gray-700 mb-1">Gender *</label>
+                                <select id="edit_gender" name="gender" required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="">Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="edit_phoneNumber" class="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
+                                <input type="tel" id="edit_phoneNumber" name="phoneNumber" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="09XXXXXXXXX">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <i data-feather="mail" class="w-5 h-5 text-indigo-600"></i>
+                            Account Information
+                        </h4>
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div>
+                                <label for="edit_email" class="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
+                                <input type="email" id="edit_email" name="email" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="rescuer@example.com">
+                            </div>
+                            <div>
+                                <label for="edit_emergencyContact" class="block text-sm font-medium text-gray-700 mb-1">Emergency Contact</label>
+                                <input type="tel" id="edit_emergencyContact" name="emergencyContact"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="09XXXXXXXXX">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Professional Information -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <i data-feather="briefcase" class="w-5 h-5 text-indigo-600"></i>
+                            Professional Information
+                        </h4>
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div>
+                                <label for="edit_type" class="block text-sm font-medium text-gray-700 mb-1">Agency Type *</label>
+                                <select id="edit_type" name="type" required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="">Select Agency Type</option>
+                                    <option value="BFP">BFP (Bureau of Fire Protection)</option>
+                                    <option value="MDRRMO">MDRRMO (Disaster Risk Reduction)</option>
+                                    <option value="PNP">PNP (Philippine National Police)</option>
+                                    <option value="Medical">Medical (Emergency Medical Services)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="edit_specialization" class="block text-sm font-medium text-gray-700 mb-1">Specialization *</label>
+                                <input type="text" id="edit_specialization" name="specialization" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="e.g., Fire and Rescue, Emergency Medicine">
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <label for="edit_status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                            <select id="edit_status" name="status"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="active">Active</option>
+                                <option value="busy">On Assignment</option>
+                                <option value="offline">Off Duty</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Address Information -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <i data-feather="map-pin" class="w-5 h-5 text-indigo-600"></i>
+                            Address Information
+                        </h4>
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div>
+                                <label for="edit_street" class="block text-sm font-medium text-gray-700 mb-1">Street *</label>
+                                <input type="text" id="edit_street" name="street" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="Street name and number">
+                            </div>
+                            <div>
+                                <label for="edit_barangay" class="block text-sm font-medium text-gray-700 mb-1">Barangay *</label>
+                                <input type="text" id="edit_barangay" name="barangay" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="Barangay name">
+                            </div>
+                        </div>
+                        <div class="grid gap-4 md:grid-cols-2 mt-4">
+                            <div>
+                                <label for="edit_municipality" class="block text-sm font-medium text-gray-700 mb-1">Municipality/City *</label>
+                                <input type="text" id="edit_municipality" name="municipality" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="Municipality or city">
+                            </div>
+                            <div>
+                                <label for="edit_province" class="block text-sm font-medium text-gray-700 mb-1">Province *</label>
+                                <input type="text" id="edit_province" name="province" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="Province">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Information -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <i data-feather="info" class="w-5 h-5 text-indigo-600"></i>
+                            Additional Information
+                        </h4>
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div>
+                                <label for="edit_accountStatus" class="block text-sm font-medium text-gray-700 mb-1">Account Status</label>
+                                <select id="edit_accountStatus" name="accountStatus"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="verified">Verified</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="suspended">Suspended</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center mt-6">
+                                <input type="checkbox" id="edit_isActive" name="isActive" checked
+                                       class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                <label for="edit_isActive" class="ml-2 text-sm text-gray-700">Active Account</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex justify-end gap-3 pt-6 border-t border-gray-200">
+                        <button type="button" onclick="closeEditModal()" 
+                                class="flex items-center gap-2 px-6 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                            <i data-feather="x" class="w-4 h-4"></i>
+                            Cancel
+                        </button>
+                        <button type="submit" id="saveRescuerBtn"
+                                class="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors">
+                            <i data-feather="save" class="w-4 h-4"></i>
+                            Save Rescuer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+        // Global variables
+        let rescuersData = [];
+        let filteredData = [];
+        let currentEditingRescuer = null;
+        let isAddingNew = false;
+
+        // CRITICAL FIX: Store rescuers by index for safe access
+        let rescuersByIndex = new Map();
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 DOM loaded, initializing rescuer management...');
+            
+            // Initialize feather icons
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+                console.log('✅ Feather icons initialized');
+            }
+            
+            // Set current date
+            const currentDateEl = document.getElementById('currentDate');
+            if (currentDateEl) {
+                const currentDate = new Date().toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                currentDateEl.textContent = currentDate;
+            }
+
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Initialize logout functionality
+            initializeLogout();
+            
+            // Load rescuers data from your API
+            loadRescuersData();
+        });
+
+        function setupEventListeners() {
+            // Search and filter functionality
+            const searchInput = document.getElementById('searchInput');
+            const statusFilter = document.getElementById('statusFilter');
+            const typeFilter = document.getElementById('typeFilter');
+            const clearFilters = document.getElementById('clearFilters');
+            const exportBtn = document.getElementById('exportBtn');
+            const refreshBtn = document.getElementById('refreshBtn');
+            const addRescuerBtn = document.getElementById('addRescuerBtn');
+            
+            // Modal controls
+            const closeModal = document.getElementById('closeModal');
+            const rescuerModal = document.getElementById('rescuerModal');
+            const closeEditModalBtn = document.getElementById('closeEditModal');
+            const editRescuerModal = document.getElementById('editRescuerModal');
+            const editRescuerForm = document.getElementById('editRescuerForm');
+            
+            if (searchInput) {
+                // Use debounced search
+                searchInput.addEventListener('input', debouncedFilter);
+            }
+            if (statusFilter) {
+                statusFilter.addEventListener('change', filterRescuers);
+            }
+            if (typeFilter) {
+                typeFilter.addEventListener('change', filterRescuers);
+            }
+            if (clearFilters) {
+                clearFilters.addEventListener('click', clearAllFilters);
+            }
+            if (exportBtn) {
+                exportBtn.addEventListener('click', exportRescuerList);
+            }
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', loadRescuersData);
+            }
+            if (addRescuerBtn) {
+                addRescuerBtn.addEventListener('click', openAddRescuerModal);
+            }
+            if (closeModal) {
+                closeModal.addEventListener('click', closeRescuerModal);
+            }
+            if (rescuerModal) {
+                rescuerModal.addEventListener('click', function(e) {
+                    if (e.target === this) closeRescuerModal();
+                });
+            }
+            if (closeEditModalBtn) {
+                closeEditModalBtn.addEventListener('click', closeEditModal);
+            }
+            if (editRescuerModal) {
+                editRescuerModal.addEventListener('click', function(e) {
+                    if (e.target === this) closeEditModal();
+                });
+            }
+            if (editRescuerForm) {
+                editRescuerForm.addEventListener('submit', handleRescuerFormSubmit);
+            }
+        }
+
+        async function loadRescuersData() {
+            console.log('🔄 Loading rescuers data from API...');
+            
+            const loadingState = document.getElementById('loadingState');
+            const errorState = document.getElementById('errorState');
+            const refreshBtn = document.getElementById('refreshBtn');
+            const refreshIcon = refreshBtn?.querySelector('[data-feather="refresh-cw"]');
+            
+            try {
+                // Show loading state
+                if (loadingState) {
+                    loadingState.classList.remove('hidden');
+                }
+                
+                // Hide error state
+                if (errorState) {
+                    errorState.classList.add('hidden');
+                }
+                
+                // Disable refresh button
+                if (refreshBtn) {
+                    refreshBtn.disabled = true;
+                    if (refreshIcon) {
+                        refreshIcon.style.animation = 'spin 1s linear infinite';
+                    }
+                }
+                
+                // Fetch data from your API
+                const response = await fetch('/api/rescuers', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const allowedRoles = ['BFP', 'MDRRMO', 'PNP', 'MEDICAL'];
+                    rescuersData = (data.rescuers || []).filter(r =>
+                    allowedRoles.includes((r.type || '').toUpperCase())
+                    );
+                    filteredData = [...rescuersData];
+
+                    
+                    // CRITICAL FIX: Store rescuers by index for safe access
+                    rescuersByIndex.clear();
+                    rescuersData.forEach((rescuer, index) => {
+                        rescuersByIndex.set(index, rescuer);
+                    });
+                    
+                    console.log('✅ Data loaded:', {
+                        totalRescuers: rescuersData.length,
+                        sampleRescuer: rescuersData[0] || 'No rescuers'
+                    });
+                    
+                    loadRescuersTable();
+                    updateRescuerStats();
+                    updateRescuerCount();
+                    
+                    showNotification(`Successfully loaded ${rescuersData.length} rescuers`, 'success');
+                } else {
+                    throw new Error(data.error || 'Failed to load rescuers');
+                }
+                
+                // Hide loading state
+                if (loadingState) {
+                    loadingState.classList.add('hidden');
+                }
+                
+                // Re-enable refresh button
+                if (refreshBtn) {
+                    refreshBtn.disabled = false;
+                    if (refreshIcon) {
+                        refreshIcon.style.animation = '';
+                    }
+                }
+                
+                if (typeof feather !== 'undefined') {
+                    feather.replace();
+                }
+                
+            } catch (error) {
+                console.error('❌ Error loading rescuers:', error);
+                
+                if (errorState) {
+                    const errorMessage = document.getElementById('errorMessage');
+                    if (errorMessage) {
+                        errorMessage.textContent = `Error: ${error.message}`;
+                    }
+                    errorState.classList.remove('hidden');
+                }
+                
+                if (loadingState) {
+                    loadingState.classList.add('hidden');
+                }
+                
+                if (refreshBtn) {
+                    refreshBtn.disabled = false;
+                    if (refreshIcon) {
+                        refreshIcon.style.animation = '';
+                    }
+                }
+                
+                showNotification(`Failed to load rescuers: ${error.message}`, 'error');
+            }
+        }
+
+        function loadRescuersTable() {
+            console.log('🏗️ Building rescuers table...');
+            
+            const tbody = document.getElementById('rescuersTableBody');
+            if (!tbody) {
+                console.error('❌ Table body element not found!');
+                return;
+            }
+            
+            tbody.innerHTML = '';
+            
+            if (filteredData.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                            <div class="flex flex-col items-center gap-2">
+                                <i data-feather="users" class="w-12 h-12 text-gray-300"></i>
+                                <span>No rescuers found</span>
+                                <small class="text-xs text-gray-400 mt-2">
+                                    ${rescuersData.length === 0 ? 'No rescuers in the system' : 'All rescuers filtered out'}
+                                </small>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                
+                updateTableStats();
+                if (typeof feather !== 'undefined') feather.replace();
+                return;
+            }
+            
+            filteredData.forEach((rescuer, index) => {
+                try {
+                    const row = createRescuerRow(rescuer, index);
+                    tbody.appendChild(row);
+                } catch (error) {
+                    console.error(`❌ Error creating row ${index + 1}:`, error, rescuer);
+                }
+            });
+            
+            updateTableStats();
+            if (typeof feather !== 'undefined') feather.replace();
+        }
+
+        // CRITICAL FIX: Updated createRescuerRow to use index-based approach
+        function createRescuerRow(rescuer, index) {
+            const tr = document.createElement('tr');
+            tr.className = 'table-row';
+            
+            const statusColors = {
+                'active': 'bg-green-100 text-green-800',
+                'busy': 'bg-orange-100 text-orange-800',
+                'offline': 'bg-gray-100 text-gray-600'
+            };
+            
+            const statusIcons = {
+                'active': 'check-circle',
+                'busy': 'clock',
+                'offline': 'moon'
+            };
+
+            // Normalize status
+            const normalizedStatus = (rescuer.status || 'active').toLowerCase();
+            const displayStatus = normalizedStatus === 'active' ? 'Active' : 
+                                normalizedStatus === 'busy' ? 'On Assignment' : 'Off Duty';
+            
+            // Extract name from email if firstName/lastName not available
+            const firstName = rescuer.firstName || extractNameFromEmail(rescuer.email, 'first') || 'Unknown';
+            const lastName = rescuer.lastName || extractNameFromEmail(rescuer.email, 'last') || 'User';
+            const fullName = `${firstName} ${lastName}`;
+            const avatarSeed = `${firstName}${lastName}`;
+            
+            // Compose location string, fallback to 'No address on record' if missing
+            let locationStr = rescuer.location || '';
+            if (!locationStr || locationStr === 'No address' || locationStr === 'N/A') {
+                locationStr = 'No address on record';
+            }
+            
+            tr.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap cursor-pointer" onclick="openRescuerModal(${index})">
+                    <div class="flex items-center gap-3">
+                        <img class="w-10 h-10 rounded-full ring-2 ring-gray-200" 
+                             src="https://api.dicebear.com/8.x/avataaars/svg?seed=${avatarSeed}"    
+                             alt="${fullName}">
+                        <div>
+                            <div class="text-sm font-medium text-gray-900">${fullName}</div>
+                            <div class="text-xs text-gray-500">ID: ${rescuer.id || 'N/A'}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap cursor-pointer" onclick="openRescuerModal(${index})">
+                    <div class="text-sm text-gray-900 flex items-center gap-1">
+                        <i data-feather="phone" class="w-3 h-3 text-gray-400"></i>
+                        ${rescuer.contact || 'N/A'}
+                    </div>
+                    <div class="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                        <i data-feather="mail" class="w-3 h-3 text-gray-400"></i>
+                        ${rescuer.email || 'No email'}
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap cursor-pointer" onclick="openRescuerModal(${index})">
+                    <div class="text-sm font-medium text-gray-900">${rescuer.type || 'N/A'}</div>
+                    <div class="text-xs text-gray-500">${rescuer.specialization || 'No specialization'}</div>
+                </td>
+                <td class="px-6 py-4 cursor-pointer" onclick="openRescuerModal(${index})">
+                    <div class="text-sm text-gray-900 flex items-center gap-1">
+                        <i data-feather="map-pin" class="w-3 h-3 text-gray-400"></i>
+                        ${locationStr}
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap cursor-pointer" onclick="openRescuerModal(${index})">
+                    <span class="status-badge ${statusColors[normalizedStatus] || 'bg-gray-100 text-gray-600'}">
+                        <i data-feather="${statusIcons[normalizedStatus] || 'help-circle'}" class="w-3 h-3"></i>
+                        ${displayStatus}
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div class="flex items-center gap-2">
+                        <button onclick="handleEditRescuer(${index})" 
+                                class="text-indigo-600 hover:text-indigo-900 p-1 hover:bg-indigo-50 rounded transition-colors"
+                                title="Edit Rescuer">
+                            <i data-feather="edit-2" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="handleViewRescuer(${index})" 
+                                class="text-blue-600 hover:text-blue-900 p-1 hover:bg-blue-50 rounded transition-colors"
+                                title="View Details">
+                            <i data-feather="eye" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="handleDeleteRescuer(${index})" 
+                                class="text-red-600 hover:text-red-900 p-1 hover:bg-red-50 rounded transition-colors"
+                                title="Delete Rescuer">
+                            <i data-feather="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            
+            return tr;
+        }
+
+        // CRITICAL FIX: Updated handler functions to use index-based approach
+        function handleEditRescuer(rescuerIndex) {
+    console.log('🛠️ Edit rescuer clicked, index:', rescuerIndex);
+    const rescuer = rescuersByIndex.get(rescuerIndex);
+    if (!rescuer) {
+        showNotification('Rescuer not found', 'error');
+        return;
+    }
+    
+    // Set global state BEFORE opening modal
+    isAddingNew = false;
+    currentEditingRescuer = rescuer;
+    
+    if (!currentEditingRescuer || !currentEditingRescuer.id) {
+        showNotification('No rescuer selected for editing. Please try clicking Edit again.', 'error');
+        return;
+    }
+    
+    const modal = document.getElementById('editRescuerModal');
+    const modalTitle = document.getElementById('editModalTitle');
+    const authSection = document.getElementById('authSection');
+    const registrationModeIndicator = document.getElementById('registrationModeIndicator');
+    const saveBtn = document.getElementById('saveRescuerBtn');
+    
+    if (!modal || !modalTitle) {
+        showNotification('Modal elements not found', 'error');
+        return;
+    }
+    
+    // Set edit mode
+    modalTitle.textContent = 'Edit Rescuer';
+    if (authSection) authSection.classList.add('hidden');
+    if (registrationModeIndicator) registrationModeIndicator.classList.add('hidden');
+    if (saveBtn) {
+        saveBtn.innerHTML = '<i data-feather="save" class="w-4 h-4"></i> Update Rescuer';
+    }
+    
+    try {
+        // Enhanced field mapping with all available fields
+        const fieldMap = {
+            // Personal Information
+            'edit_firstName': rescuer.firstName || '',
+            'edit_lastName': rescuer.lastName || '',
+            'edit_middleInitial': rescuer.middleInitial || '',
+            'edit_gender': rescuer.gender || '',
+            
+            // Contact Information
+            'edit_phoneNumber': rescuer.phoneNumber || rescuer.contact || '',
+            'edit_email': rescuer.email || '',
+            'edit_emergencyContact': rescuer.emergencyContact || '',
+            
+            // Professional Information
+            'edit_role': mapTypeToRole(rescuer.type) || rescuer.role || '',
+            'edit_status': (rescuer.status || 'active').toLowerCase(),
+            
+            // Address Information
+            'edit_street': rescuer.address?.street || '',
+            'edit_barangay': rescuer.address?.barangay || '',
+            'edit_municipality': rescuer.address?.municipality || '',
+            'edit_province': rescuer.address?.province || '',
+            
+            // Additional address fields
+            'edit_fullAddress': rescuer.address?.fullAddress || rescuer.location || '',
+            'edit_barangayCode': rescuer.address?.barangayCode || '',
+            'edit_municipalityCode': rescuer.address?.municipalityCode || '',
+            'edit_provinceCode': rescuer.address?.provinceCode || '',
+            'edit_zipCode': rescuer.address?.zipCode || '',
+            'edit_region': rescuer.address?.region || '',
+            'edit_coordinates': rescuer.address?.coordinates || ''
+        };
+        
+        // Populate form fields
+        Object.entries(fieldMap).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                if (element.tagName === 'SELECT') {
+                    // Handle select elements
+                    element.value = value;
+                    if (element.value !== value) {
+                        // If the exact value doesn't exist, try to find a close match
+                        const options = Array.from(element.options);
+                        const match = options.find(opt => 
+                            opt.value.toLowerCase() === value.toLowerCase() ||
+                            opt.textContent.toLowerCase().includes(value.toLowerCase())
+                        );
+                        if (match) {
+                            element.value = match.value;
+                        }
+                    }
+                } else {
+                    element.value = value;
+                }
+            }
+        });
+        
+        // Load and populate location dropdowns
+        populateLocationDropdowns(rescuer);
+        
+    } catch (error) {
+        console.error('Error populating form fields:', error);
+        showNotification('Error populating form fields', 'error');
+        return;
+    }
+    
+    closeRescuerModal();
+    modal.classList.remove('hidden');
+    if (typeof feather !== 'undefined') feather.replace();
+}
+
+// Enhanced location API functions
+async function populateLocationDropdowns(rescuer) {
+    try {
+        console.log('🌍 Loading location data for rescuer:', rescuer.address);
+        
+        // Load provinces first
+        await loadProvinces();
+        
+        // If rescuer has address data, populate dropdowns in sequence
+        if (rescuer.address) {
+            const { province, municipality, barangay } = rescuer.address;
+            
+            if (province) {
+                // Set province
+                const provinceSelect = document.getElementById('edit_province');
+                if (provinceSelect) {
+                    provinceSelect.value = province;
+                    
+                    // Load municipalities for this province
+                    if (municipality) {
+                        await loadMunicipalities(province, municipality);
+                        
+                        // Load barangays for this municipality
+                        if (barangay) {
+                            await loadBarangays(municipality, barangay);
+                        }
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error loading location data:', error);
+        showNotification('Error loading location data', 'error');
+    }
+}
+
+// Enhanced province loading
+async function loadProvinces() {
+    try {
+        const response = await fetch('/api/locations/provinces');
+        if (!response.ok) throw new Error('Failed to load provinces');
+        
+        const provinces = await response.json();
+        const provinceSelect = document.getElementById('edit_province');
+        
+        if (!provinceSelect) return;
+        
+        provinceSelect.innerHTML = '<option value="">Select Province</option>';
+        provinces.forEach(province => {
+            const option = document.createElement('option');
+            option.value = province.name;
+            option.setAttribute('data-code', province.code);
+            option.setAttribute('data-region', province.region || '');
+            option.textContent = province.name;
+            provinceSelect.appendChild(option);
+        });
+        
+        console.log('✅ Provinces loaded successfully');
+    } catch (error) {
+        console.error('Error loading provinces:', error);
+        throw error;
+    }
+}
+
+// Enhanced municipality loading
+async function loadMunicipalities(provinceName, selectedMunicipality = null) {
+    const municipalitySelect = document.getElementById('edit_municipality');
+    const barangaySelect = document.getElementById('edit_barangay');
+    
+    if (!municipalitySelect) return;
+    
+    try {
+        municipalitySelect.disabled = true;
+        municipalitySelect.innerHTML = '<option value="">Loading...</option>';
+        
+        // Reset barangay dropdown
+        if (barangaySelect) {
+            barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
+            barangaySelect.disabled = true;
+        }
+        
+        // Get province code from the selected option
+        const provinceSelect = document.getElementById('edit_province');
+        const selectedProvinceOption = provinceSelect.options[provinceSelect.selectedIndex];
+        const provinceCode = selectedProvinceOption?.getAttribute('data-code');
+        
+        if (!provinceCode && !provinceName) {
+            throw new Error('Province code or name required');
+        }
+        
+        // Use either province code or name for the API call
+        const endpoint = provinceCode ? 
+            `/api/locations/provinces/${provinceCode}/municipalities` :
+            `/api/locations/municipalities?province=${encodeURIComponent(provinceName)}`;
+            
+        const response = await fetch(endpoint);
+        if (!response.ok) throw new Error('Failed to load municipalities');
+        
+        const municipalities = await response.json();
+        
+        municipalitySelect.innerHTML = '<option value="">Select Municipality</option>';
+        municipalities.forEach(municipality => {
+            const option = document.createElement('option');
+            option.value = municipality.name;
+            option.setAttribute('data-code', municipality.code);
+            option.textContent = municipality.name;
+            municipalitySelect.appendChild(option);
+        });
+        
+        municipalitySelect.disabled = false;
+        
+        // If there's a selected municipality, set it
+        if (selectedMunicipality) {
+            municipalitySelect.value = selectedMunicipality;
+        }
+        
+        console.log('✅ Municipalities loaded successfully');
+    } catch (error) {
+        console.error('Error loading municipalities:', error);
+        municipalitySelect.innerHTML = '<option value="">Error loading</option>';
+        municipalitySelect.disabled = false;
+        throw error;
+    }
+}
+
+// Enhanced barangay loading
+async function loadBarangays(municipalityName, selectedBarangay = null) {
+    const barangaySelect = document.getElementById('edit_barangay');
+    
+    if (!barangaySelect) return;
+    
+    try {
+        barangaySelect.disabled = true;
+        barangaySelect.innerHTML = '<option value="">Loading...</option>';
+        
+        // Get municipality code from the selected option
+        const municipalitySelect = document.getElementById('edit_municipality');
+        const selectedMunicipalityOption = municipalitySelect.options[municipalitySelect.selectedIndex];
+        const municipalityCode = selectedMunicipalityOption?.getAttribute('data-code');
+        
+        // Use either municipality code or name for the API call
+        const endpoint = municipalityCode ? 
+            `/api/locations/municipalities/${municipalityCode}/barangays` :
+            `/api/locations/barangays?municipality=${encodeURIComponent(municipalityName)}`;
+            
+        const response = await fetch(endpoint);
+        if (!response.ok) throw new Error('Failed to load barangays');
+        
+        const barangays = await response.json();
+        
+        barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
+        barangays.forEach(barangay => {
+            const option = document.createElement('option');
+            option.value = barangay.name;
+            option.setAttribute('data-code', barangay.code);
+            option.textContent = barangay.name;
+            barangaySelect.appendChild(option);
+        });
+        
+        barangaySelect.disabled = false;
+        
+        // If there's a selected barangay, set it
+        if (selectedBarangay) {
+            barangaySelect.value = selectedBarangay;
+        }
+        
+        console.log('✅ Barangays loaded successfully');
+    } catch (error) {
+        console.error('Error loading barangays:', error);
+        barangaySelect.innerHTML = '<option value="">Error loading</option>';
+        barangaySelect.disabled = false;
+        throw error;
+    }
+}
+
+// Helper function to map display type to role
+function mapTypeToRole(type) {
+    const typeToRoleMap = {
+        'BFP': 'bfp',
+        'MDRRMO': 'mdrrmo',
+        'PNP': 'pnp',
+        'Medical': 'medical',
+        'MEDICAL': 'medical'
+    };
+    return typeToRoleMap[type] || (type ? type.toLowerCase() : '');
+}
+
+        // Filter and Search Functions
+        function filterRescuers() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
+            const typeFilter = document.getElementById('typeFilter').value.toLowerCase();
+            const allowedRoles = ['BFP', 'MDRRMO', 'PNP', 'MEDICAL'];
+            filteredData = rescuersData.filter(rescuer => {
+                const matchesRole = allowedRoles.includes((rescuer.type || '').toUpperCase());
+
+                const matchesSearch = !searchTerm || 
+                    (rescuer.contact || '').toLowerCase().includes(searchTerm) ||
+                    (rescuer.email || '').toLowerCase().includes(searchTerm) ||
+                    (rescuer.location || '').toLowerCase().includes(searchTerm) ||
+                    (rescuer.specialization || '').toLowerCase().includes(searchTerm) ||
+                    (rescuer.type || '').toLowerCase().includes(searchTerm) ||
+                    (rescuer.firstName || '').toLowerCase().includes(searchTerm) ||
+                    (rescuer.lastName || '').toLowerCase().includes(searchTerm);
+
+                const matchesStatus = !statusFilter || 
+                    (rescuer.status || 'active').toLowerCase() === statusFilter;
+
+                const matchesType = !typeFilter || 
+                    (rescuer.type || '').toLowerCase() === typeFilter.toLowerCase();
+
+                return matchesRole && matchesSearch && matchesStatus && matchesType;
+            });
+
+            
+            loadRescuersTable();
+        }
+
+        function clearAllFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('typeFilter').value = '';
+            filteredData = [...rescuersData];
+            loadRescuersTable();
+        }
+
+        // Modal Functions - FIXED to use index
+        function openRescuerModal(rescuerIndex) {
+            const rescuer = rescuersByIndex.get(rescuerIndex);
+            if (!rescuer) {
+                showNotification('Rescuer not found', 'error');
+                return;
+            }
+            
+            currentEditingRescuer = rescuer;
+            const modal = document.getElementById('rescuerModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalContent = document.getElementById('modalContent');
+            
+            const firstName = rescuer.firstName || extractNameFromEmail(rescuer.email, 'first') || 'Unknown';
+            const lastName = rescuer.lastName || extractNameFromEmail(rescuer.email, 'last') || 'User';
+            const fullName = `${firstName} ${lastName}`;
+            
+            modalTitle.textContent = `${fullName} - Details`;
+            
+            modalContent.innerHTML = `
+                <div class="space-y-6">
+                    <!-- Personal Information -->
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h4 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            <i data-feather="user" class="w-5 h-5 text-indigo-600"></i>
+                            Personal Information
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-sm font-medium text-gray-500">Full Name</label>
+                                <p class="text-gray-900">${fullName}</p>
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-gray-500">Rescuer ID</label>
+                                <p class="text-gray-900">${rescuer.id || 'N/A'}</p>
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-gray-500">Phone Number</label>
+                                <p class="text-gray-900">${rescuer.contact || 'N/A'}</p>
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-gray-500">Email</label>
+                                <p class="text-gray-900">${rescuer.email || 'N/A'}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Professional Information -->
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h4 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            <i data-feather="briefcase" class="w-5 h-5 text-indigo-600"></i>
+                            Professional Information
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-sm font-medium text-gray-500">Type</label>
+                                <p class="text-gray-900">${rescuer.type || 'N/A'}</p>
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-gray-500">Specialization</label>
+                                <p class="text-gray-900">${rescuer.specialization || 'N/A'}</p>
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-gray-500">Current Status</label>
+                                <p class="text-gray-900">${rescuer.status || 'Active'}</p>
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-gray-500">Badge/ID</label>
+                                <p class="text-gray-900">${rescuer.badge || rescuer.type || 'N/A'}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Location & Contact -->
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h4 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            <i data-feather="map-pin" class="w-5 h-5 text-indigo-600"></i>
+                            Location & Emergency Contact
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-sm font-medium text-gray-500">Current Location</label>
+                                <p class="text-gray-900">${rescuer.location || 'No location specified'}</p>
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-gray-500">Emergency Contact</label>
+                                <p class="text-gray-900">${rescuer.emergencyContact || 'Not provided'}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex justify-end gap-3 pt-6 border-t border-gray-200">
+                        <button onclick="handleEditRescuer(${rescuerIndex})" 
+                                class="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors">
+                            <i data-feather="edit-2" class="w-4 h-4"></i>
+                            Edit Rescuer
+                        </button>
+                        <button onclick="closeRescuerModal()" 
+                                class="flex items-center gap-2 px-6 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                            <i data-feather="x" class="w-4 h-4"></i>
+                            Close
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+            if (typeof feather !== 'undefined') feather.replace();
+        }
+
+        function closeRescuerModal() {
+            const modal = document.getElementById('rescuerModal');
+            modal.classList.add('hidden');
+            currentEditingRescuer = null;
+        }
+
+        // Add/Edit Rescuer Functions
+        function openAddRescuerModal() {
+    console.log('Opening add rescuer modal in registration mode');
+    
+    isAddingNew = true;
+    currentEditingRescuer = null;
+    
+    const modal = document.getElementById('editRescuerModal');
+    const modalTitle = document.getElementById('editModalTitle');
+    const form = document.getElementById('editRescuerForm');
+    const authSection = document.getElementById('authSection');
+    const registrationModeIndicator = document.getElementById('registrationModeIndicator');
+    const saveBtn = document.getElementById('saveRescuerBtn');
+    
+    if (!modal || !modalTitle || !form) {
+        showNotification('Modal elements not found', 'error');
+        return;
+    }
+    
+    // Set registration mode
+    modalTitle.textContent = 'Register New Rescuer';
+    if (authSection) authSection.classList.remove('hidden');
+    if (registrationModeIndicator) registrationModeIndicator.classList.remove('hidden');
+    if (saveBtn) {
+        saveBtn.innerHTML = '<i data-feather="user-plus" class="w-4 h-4"></i> Register Rescuer';
+    }
+    
+    form.reset();
+    
+    // Load provinces for address selection
+    loadProvinces();
+    
+    modal.classList.remove('hidden');
+    if (typeof feather !== 'undefined') feather.replace();
+}
+
+function handleEditRescuer(rescuerIndex) {
+    console.log('Opening edit rescuer modal (edit mode)');
+    
+    const rescuer = rescuersByIndex.get(rescuerIndex);
+    if (!rescuer) {
+        showNotification('Rescuer not found', 'error');
+        return;
+    }
+    
+    isAddingNew = false;
+    currentEditingRescuer = rescuer;
+    
+    const modal = document.getElementById('editRescuerModal');
+    const modalTitle = document.getElementById('editModalTitle');
+    const authSection = document.getElementById('authSection');
+    const registrationModeIndicator = document.getElementById('registrationModeIndicator');
+    const saveBtn = document.getElementById('saveRescuerBtn');
+    
+    // Set edit mode
+    modalTitle.textContent = 'Edit Rescuer';
+    if (authSection) authSection.classList.add('hidden');
+    if (registrationModeIndicator) registrationModeIndicator.classList.add('hidden');
+    if (saveBtn) {
+        saveBtn.innerHTML = '<i data-feather="save" class="w-4 h-4"></i> Update Rescuer';
+    }
+    
+    // Populate form with existing data
+    populateEditForm(rescuer);
+    
+    modal.classList.remove('hidden');
+    if (typeof feather !== 'undefined') feather.replace();
+}
+
+// Load provinces from API
+async function loadProvinces() {
+    try {
+        const response = await fetch('/api/provinces');
+        const provinces = await response.json();
+        
+        const provinceSelect = document.getElementById('edit_province');
+        provinceSelect.innerHTML = '<option value="">Select Province</option>';
+        
+        provinces.forEach(province => {
+            const option = document.createElement('option');
+            option.value = province.name;
+            option.setAttribute('data-code', province.code);
+            option.textContent = province.name;
+            provinceSelect.appendChild(option);
+        });
+        
+    } catch (error) {
+        console.error('Error loading provinces:', error);
+        showNotification('Error loading provinces', 'error');
+    }
+}
+
+// Load municipalities when province is selected
+document.getElementById('edit_province').addEventListener('change', async function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const provinceCode = selectedOption.getAttribute('data-code');
+    
+    const municipalitySelect = document.getElementById('edit_municipality');
+    const barangaySelect = document.getElementById('edit_barangay');
+    
+    // Reset dependent dropdowns
+    municipalitySelect.innerHTML = '<option value="">Select Municipality</option>';
+    barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
+    barangaySelect.disabled = true;
+    
+    if (!provinceCode) {
+        municipalitySelect.disabled = true;
+        return;
+    }
+    
+    try {
+        municipalitySelect.disabled = true;
+        municipalitySelect.innerHTML = '<option value="">Loading...</option>';
+        
+        const response = await fetch(`/api/provinces/${provinceCode}/municipalities`);
+        const municipalities = await response.json();
+        
+        municipalitySelect.innerHTML = '<option value="">Select Municipality</option>';
+        municipalities.forEach(municipality => {
+            const option = document.createElement('option');
+            option.value = municipality.name;
+            option.setAttribute('data-code', municipality.code);
+            option.textContent = municipality.name;
+            municipalitySelect.appendChild(option);
+        });
+        
+        municipalitySelect.disabled = false;
+        
+    } catch (error) {
+        console.error('Error loading municipalities:', error);
+        municipalitySelect.innerHTML = '<option value="">Error loading</option>';
+        showNotification('Error loading municipalities', 'error');
+    }
+});
+
+// Load barangays when municipality is selected
+document.getElementById('edit_municipality').addEventListener('change', async function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const municipalityCode = selectedOption.getAttribute('data-code');
+    
+    const barangaySelect = document.getElementById('edit_barangay');
+    barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
+    
+    if (!municipalityCode) {
+        barangaySelect.disabled = true;
+        return;
+    }
+    
+    try {
+        barangaySelect.disabled = true;
+        barangaySelect.innerHTML = '<option value="">Loading...</option>';
+        
+        const response = await fetch(`/api/municipalities/${municipalityCode}/barangays`);
+        const barangays = await response.json();
+        
+        barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
+        barangays.forEach(barangay => {
+            const option = document.createElement('option');
+            option.value = barangay.name;
+            option.setAttribute('data-code', barangay.code);
+            option.textContent = barangay.name;
+            barangaySelect.appendChild(option);
+        });
+        
+        barangaySelect.disabled = false;
+        
+    } catch (error) {
+        console.error('Error loading barangays:', error);
+        barangaySelect.innerHTML = '<option value="">Error loading</option>';
+        showNotification('Error loading barangays', 'error');
+    }
+});
+
+// Password visibility toggle
+function togglePasswordVisibility(inputId) {
+    const input = document.getElementById(inputId);
+    const icon = input.nextElementSibling.querySelector('[data-feather]');
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.setAttribute('data-feather', 'eye-off');
+    } else {
+        input.type = 'password';
+        icon.setAttribute('data-feather', 'eye');
+    }
+    
+    if (typeof feather !== 'undefined') feather.replace();
+}
+
+// Updated form submission handler
+async function handleRescuerFormSubmit(event) {
+    event.preventDefault();
+    
+    console.log('Form submission started', { isAddingNew });
+    
+    const submitBtn = document.getElementById('saveRescuerBtn');
+    const originalText = submitBtn.innerHTML;
+    
+    try {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i data-feather="loader" class="w-4 h-4 animate-spin"></i> Processing...';
+        
+        const formData = new FormData(event.target);
+        
+        if (isAddingNew) {
+            // Registration mode - validate passwords
+            const password = formData.get('password');
+            const confirmPassword = formData.get('confirmPassword');
+            
+            if (!password || password.length < 6) {
+                throw new Error('Password must be at least 6 characters long');
+            }
+            
+            if (password !== confirmPassword) {
+                throw new Error('Passwords do not match');
+            }
+            
+            // Additional validation for registration
+            const validationErrors = validateRegistrationForm(formData);
+            if (validationErrors.length > 0) {
+                throw new Error(validationErrors.join(', '));
+            }
+            
+            // Prepare registration data
+            const registrationData = {
+                email: formData.get('email').trim(),
+                password: password,
+                firstName: formData.get('firstName').trim(),
+                middleInitial: formData.get('middleInitial').trim(),
+                lastName: formData.get('lastName').trim(),
+                phoneNumber: formData.get('phoneNumber').trim(),
+                gender: formData.get('gender'),
+                role: formData.get('role'),
+                address: {
+                    province: formData.get('province'),
+                    municipality: formData.get('municipality'),
+                    barangay: formData.get('barangay'),
+                    street: formData.get('street').trim()
+                }
+            };
+            
+            // Add codes if available
+            const provinceSelect = document.getElementById('edit_province');
+            const municipalitySelect = document.getElementById('edit_municipality');
+            const barangaySelect = document.getElementById('edit_barangay');
+            
+            if (provinceSelect.selectedIndex > 0) {
+                registrationData.address.provinceCode = provinceSelect.options[provinceSelect.selectedIndex].getAttribute('data-code');
+            }
+            if (municipalitySelect.selectedIndex > 0) {
+                registrationData.address.municipalityCode = municipalitySelect.options[municipalitySelect.selectedIndex].getAttribute('data-code');
+            }
+            if (barangaySelect.selectedIndex > 0) {
+                registrationData.address.barangayCode = barangaySelect.options[barangaySelect.selectedIndex].getAttribute('data-code');
+            }
+            
+            console.log('Registering new rescuer:', registrationData);
+            
+            // Call the new admin registration API endpoint
+            const response = await fetch('/api/admin/register-rescuer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(registrationData)
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                let errorMessage = 'Registration failed';
+                
+                try {
+                    const errorData = JSON.parse(errorText);
+                    errorMessage = errorData.error || errorMessage;
+                } catch {
+                    errorMessage = errorText || errorMessage;
+                }
+                
+                throw new Error(errorMessage);
+            }
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showNotification('Rescuer registered successfully!', 'success');
+                closeEditModal();
+                loadRescuersData();
+            } else {
+                throw new Error(result.error || 'Registration failed');
+            }
+            
+        } else {
+            // Edit mode - existing update functionality
+            if (!currentEditingRescuer || !currentEditingRescuer.id) {
+                throw new Error('No rescuer selected for editing');
+            }
+            
+            // Prepare update data (without password fields)
+            const updateData = {
+                firstName: formData.get('firstName').trim(),
+                middleInitial: formData.get('middleInitial').trim(),
+                lastName: formData.get('lastName').trim(),
+                phoneNumber: formData.get('phoneNumber').trim(),
+                gender: formData.get('gender'),
+                role: formData.get('role'),
+                emergencyContact: formData.get('emergencyContact').trim(),
+                address: {
+                    province: formData.get('province'),
+                    municipality: formData.get('municipality'),
+                    barangay: formData.get('barangay'),
+                    street: formData.get('street').trim()
+                }
+            };
+            
+            const response = await fetch(`/api/rescuers/${currentEditingRescuer.id}/update`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updateData)
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Update failed: ${errorText}`);
+            }
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showNotification('Rescuer updated successfully!', 'success');
+                closeEditModal();
+                loadRescuersData();
+            } else {
+                throw new Error(result.error || 'Update failed');
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error saving rescuer:', error);
+        showNotification(error.message, 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+        if (typeof feather !== 'undefined') feather.replace();
+    }
+}
+
+// Validation for registration form
+function validateRegistrationForm(formData) {
+    const errors = [];
+    
+    const email = formData.get('email')?.trim();
+    const firstName = formData.get('firstName')?.trim();
+    const lastName = formData.get('lastName')?.trim();
+    const phoneNumber = formData.get('phoneNumber')?.trim();
+    const gender = formData.get('gender');
+    const role = formData.get('role');
+    const province = formData.get('province');
+    const municipality = formData.get('municipality');
+    const barangay = formData.get('barangay');
+    const street = formData.get('street')?.trim();
+    
+    if (!email || !isValidEmail(email)) errors.push('Valid email is required');
+    if (!firstName) errors.push('First name is required');
+    if (!lastName) errors.push('Last name is required');
+    if (!phoneNumber) errors.push('Phone number is required');
+    if (!gender) errors.push('Gender is required');
+    if (!role) errors.push('Role is required');
+    if (!province || !municipality || !barangay || !street) {
+        errors.push('Complete address is required');
+    }
+    
+    return errors;
+}
+
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+// Helper function to populate edit form
+function populateEditForm(rescuer) {
+    const fieldMap = {
+        'edit_email': rescuer.email || '',
+        'edit_firstName': rescuer.firstName || '',
+        'edit_lastName': rescuer.lastName || '',
+        'edit_middleInitial': rescuer.middleInitial || '',
+        'edit_phoneNumber': rescuer.phoneNumber || rescuer.contact || '',
+        'edit_gender': rescuer.gender || '',
+        'edit_role': rescuer.role || '',
+        'edit_emergencyContact': rescuer.emergencyContact || '',
+        'edit_street': rescuer.address?.street || ''
+    };
+    
+    Object.entries(fieldMap).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.value = value;
+        }
+    });
+    
+    // Handle address dropdowns if needed
+    if (rescuer.address) {
+        loadProvinces().then(() => {
+            if (rescuer.address.province) {
+                const provinceSelect = document.getElementById('edit_province');
+                provinceSelect.value = rescuer.address.province;
+                // Trigger change event to load municipalities
+                provinceSelect.dispatchEvent(new Event('change'));
+            }
+        });
+    }
+}
+
+// Update close modal function
+function closeEditModal() {
+    const modal = document.getElementById('editRescuerModal');
+    modal.classList.add('hidden');
+    
+    // Reset form and state
+    const form = document.getElementById('editRescuerForm');
+    if (form) form.reset();
+    
+    currentEditingRescuer = null;
+    isAddingNew = false;
+    
+    // Reset dropdowns
+    const municipalitySelect = document.getElementById('edit_municipality');
+    const barangaySelect = document.getElementById('edit_barangay');
+    if (municipalitySelect) {
+        municipalitySelect.innerHTML = '<option value="">Select Municipality</option>';
+        municipalitySelect.disabled = true;
+    }
+    if (barangaySelect) {
+        barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
+        barangaySelect.disabled = true;
+    }
+}
+
+        // Helper function for delete by ID
+        async function deleteRescuerById(rescuerId) {
+            try {
+                const response = await fetch(`/api/rescuers/${rescuerId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification('Rescuer deleted successfully!', 'success');
+                    loadRescuersData();
+                } else {
+                    throw new Error(result.error || 'Delete failed');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error deleting rescuer:', error);
+                showNotification(`Failed to delete rescuer: ${error.message}`, 'error');
+            }
+        }
+
+        // Backward compatibility functions
+        function deleteRescuer(rescuerId) {
+            const rescuer = rescuersData.find(r => String(r.id) === String(rescuerId));
+            if (rescuer) {
+                const index = rescuersData.findIndex(r => String(r.id) === String(rescuerId));
+                if (index !== -1) {
+                    handleDeleteRescuer(index);
+                }
+            } else {
+                showNotification('Rescuer not found', 'error');
+            }
+        }
+
+        function viewRescuerDetails(rescuerId) {
+            const rescuer = rescuersData.find(r => String(r.id) === String(rescuerId));
+            if (rescuer) {
+                const index = rescuersData.findIndex(r => String(r.id) === String(rescuerId));
+                if (index !== -1) {
+                    handleViewRescuer(index);
+                }
+            } else {
+                showNotification('Rescuer not found', 'error');
+            }
+        }
+
+        function editRescuer(rescuerIdOrObject) {
+            console.log('🔧 editRescuer called with:', rescuerIdOrObject);
+            
+            let rescuer;
+            let index;
+            
+            // Handle both ID and object parameters
+            if (typeof rescuerIdOrObject === 'object' && rescuerIdOrObject !== null) {
+                rescuer = rescuerIdOrObject;
+                index = rescuersData.findIndex(r => String(r.id) === String(rescuer.id));
+            } else {
+                // Find rescuer by ID
+                index = rescuersData.findIndex(r => String(r.id) === String(rescuerIdOrObject));
+                rescuer = rescuersData[index];
+            }
+            
+            if (!rescuer || index === -1) {
+                showNotification('Rescuer not found', 'error');
+                return;
+            }
+            
+            handleEditRescuer(index);
+        }
+
+        // Export Functions
+        function exportRescuerList() {
+            try {
+                const csvContent = generateCSV(filteredData);
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `rescuers_${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+                showNotification('Rescuer list exported successfully!', 'success');
+            } catch (error) {
+                console.error('❌ Error exporting:', error);
+                showNotification('Failed to export rescuer list', 'error');
+            }
+        }
+
+        function generateCSV(data) {
+            const headers = ['ID', 'Name', 'Contact', 'Email', 'Type', 'Specialization', 'Status', 'Location', 'Emergency Contact'];
+            const csvRows = [headers.join(',')];
+            
+            data.forEach(rescuer => {
+                const firstName = rescuer.firstName || extractNameFromEmail(rescuer.email, 'first') || 'Unknown';
+                const lastName = rescuer.lastName || extractNameFromEmail(rescuer.email, 'last') || 'User';
+                const fullName = `${firstName} ${lastName}`;
+                
+                const row = [
+                    rescuer.id || '',
+                    `"${fullName}"`,
+                    rescuer.contact || '',
+                    rescuer.email || '',
+                    rescuer.type || '',
+                    `"${rescuer.specialization || ''}"`,
+                    rescuer.status || '',
+                    `"${rescuer.location || ''}"`,
+                    rescuer.emergencyContact || ''
+                ];
+                csvRows.push(row.join(','));
+            });
+            
+            return csvRows.join('\n');
+        }
+
+        // Statistics and Update Functions
+        function updateRescuerStats() {
+            const stats = {
+                total: rescuersData.length,
+                active: rescuersData.filter(r => (r.status || 'active').toLowerCase() === 'active').length,
+                busy: rescuersData.filter(r => (r.status || '').toLowerCase() === 'busy').length,
+                offline: rescuersData.filter(r => (r.status || '').toLowerCase() === 'offline').length
+            };
+            
+            document.getElementById('totalRescuers').textContent = stats.total;
+            document.getElementById('activeRescuers').textContent = stats.active;
+            document.getElementById('busyRescuers').textContent = stats.busy;
+            document.getElementById('offDutyRescuers').textContent = stats.offline;
+        }
+
+        function updateRescuerCount() {
+            const rescuerCount = document.getElementById('rescuerCount');
+            if (rescuerCount) {
+                rescuerCount.textContent = rescuersData.length;
+            }
+        }
+
+        function updateTableStats() {
+            const showingCount = document.getElementById('showingCount');
+            if (showingCount) {
+                showingCount.textContent = filteredData.length;
+            }
+        }
+
+        // Utility Functions
+        function extractNameFromEmail(email, part = 'first') {
+            if (!email) return '';
+            
+            try {
+                const username = email.split('@')[0];
+                const cleanUsername = username.replace(/[._-]/g, ' ');
+                const nameParts = cleanUsername.split(' ').filter(part => part.length > 0);
+                
+                if (part === 'first' && nameParts.length > 0) {
+                    return nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1).toLowerCase();
+                } else if (part === 'last' && nameParts.length > 1) {
+                    return nameParts[nameParts.length - 1].charAt(0).toUpperCase() + nameParts[nameParts.length - 1].slice(1).toLowerCase();
+                }
+                
+                return nameParts[0] ? nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1).toLowerCase() : '';
+            } catch (error) {
+                return '';
+            }
+        }
+
+        // Notification System
+        function showNotification(message, type = 'info') {
+            // Remove existing notifications
+            const existingNotifications = document.querySelectorAll('.notification');
+            existingNotifications.forEach(notification => notification.remove());
+            
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            const icon = type === 'success' ? 'check-circle' : 
+                        type === 'error' ? 'alert-circle' : 'info';
+            
+            notification.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <i data-feather="${icon}" class="w-5 h-5"></i>
+                    <span class="flex-1">${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-2 opacity-70 hover:opacity-100">
+                        <i data-feather="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
+            
+            // Show notification
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100);
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.classList.remove('show');
+                    setTimeout(() => {
+                        if (notification.parentElement) {
+                            notification.remove();
+                        }
+                    }, 300);
+                }
+            }, 5000);
+        }
+
+        // Logout Functions
+        function initializeLogout() {
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', handleLogout);
+            }
+        }
+
+        function handleLogout(event) {
+            event.preventDefault();
+            
+            if (confirm('Are you sure you want to logout?')) {
+                // Show loading state
+                showNotification('Logging out...', 'info');
+                
+                // Perform logout
+                fetch('/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = '/admin_login';
+                    } else {
+                        throw new Error('Logout failed');
+                    }
+                })
+                .catch(error => {
+                    console.error('Logout error:', error);
+                    showNotification('Logout failed. Please try again.', 'error');
+                });
+            }
+        }
+
+        // Performance optimization: Debounce search
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Apply debounce to search
+        const debouncedFilter = debounce(filterRescuers, 300);
+
+        // Keyboard Shortcuts
+        document.addEventListener('keydown', function(event) {
+            // Ctrl/Cmd + N for new rescuer
+            if ((event.ctrlKey || event.metaKey) && event.key === 'n') {
+                event.preventDefault();
+                openAddRescuerModal();
+            }
+            
+            // Ctrl/Cmd + R for refresh
+            if ((event.ctrlKey || event.metaKey) && event.key === 'r') {
+                event.preventDefault();
+                loadRescuersData();
+            }
+            
+            // Escape to close modals
+            if (event.key === 'Escape') {
+                const rescuerModal = document.getElementById('rescuerModal');
+                const editModal = document.getElementById('editRescuerModal');
+                
+                if (!rescuerModal.classList.contains('hidden')) {
+                    closeRescuerModal();
+                } else if (!editModal.classList.contains('hidden')) {
+                    closeEditModal();
+                }
+            }
+            
+            // Ctrl/Cmd + F or / to focus search
+            if (((event.ctrlKey || event.metaKey) && event.key === 'f') || event.key === '/') {
+                event.preventDefault();
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) {
+                    searchInput.focus();
+                    searchInput.select();
+                }
+            }
+        });
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            console.log('🔄 Auto-refreshing rescuer data...');
+            loadRescuersData();
+        }, 30000);
+
+        // Window resize handler
+        window.addEventListener('resize', function() {
+            // Handle responsive behavior if needed
+            const sidebar = document.querySelector('aside');
+            if (window.innerWidth < 768) {
+                // Mobile responsive behavior can be added here
+            }
+        });
+
+        // Error Handling for API calls
+        window.addEventListener('unhandledrejection', function(event) {
+            console.error('Unhandled promise rejection:', event.reason);
+            showNotification('An unexpected error occurred. Please try again.', 'error');
+        });
+
+        window.addEventListener('error', function(event) {
+            console.error('Global error:', event.error);
+            showNotification('An error occurred. Please refresh the page.', 'error');
+        });
+
+        console.log('✅ Rescuer Management System initialized successfully');
+    </script>
+</body>
+</html>
