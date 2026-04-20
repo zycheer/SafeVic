@@ -2041,7 +2041,7 @@ class _IncidentProcessingPageState extends State<IncidentProcessingPage> {
     String? photoUrl,
   }) async {
     const String flaskUrl =
-        'https://unvociferous-microscopic-jamari.ngrok-free.dev/api/report_incident';
+        'https://capstone-production-9474.up.railway.app/api/report_incident';
 
     try {
       final payload = {

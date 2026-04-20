@@ -62,7 +62,7 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
-  static const String BACKEND_URL = 'https://unvociferous-microscopic-jamari.ngrok-free.dev';
+  static const String BACKEND_URL = 'https://capstone-production-9474.up.railway.app';
 
   @override
   void initState() {

@@ -23,7 +23,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _obscurePassword = true;
 
   // Update your backend URL here - make sure it matches your Flask server
-  static const String BACKEND_URL = 'https://unvociferous-microscopic-jamari.ngrok-free.dev';
+  static const String BACKEND_URL = 'https://capstone-production-9474.up.railway.app';
 
   @override
   void initState() {

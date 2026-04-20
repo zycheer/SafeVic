@@ -122,7 +122,7 @@ Future<void> _sendDisasterResponderNotificationToUser(
   String incidentCategory
 ) async {
   try {
-    const String flaskUrl = 'https://unvociferous-microscopic-jamari.ngrok-free.dev/api/responder_update';
+    const String flaskUrl = 'https://capstone-production-9474.up.railway.app/api/responder_update';
     
     final user = FirebaseAuth.instance.currentUser;
     final responderName = user?.displayName ?? user?.email ?? 'Disaster Responder';
